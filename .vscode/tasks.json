@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "never"
+      }
+    },
+    {
+      "label": "watch",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "watch"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": {
+        "owner": "esbuild",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^✘ \\[ERROR\\] (.+)$",
+          "file": 1,
+          "message": 0
+        },
+        "background": {
+          "beginsPattern": "esbuild.*--watch",
+          "endsPattern": "⚡ Done in"
+        }
+      }
+    }
+  ]
+}

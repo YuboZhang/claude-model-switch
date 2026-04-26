@@ -1,0 +1,105 @@
+:root {
+  --bg: var(--vscode-editor-background);
+  --fg: var(--vscode-editor-foreground);
+  --input-bg: var(--vscode-input-background);
+  --input-fg: var(--vscode-input-foreground);
+  --input-border: var(--vscode-input-border);
+  --btn-bg: var(--vscode-button-background);
+  --btn-fg: var(--vscode-button-foreground);
+  --btn-hover: var(--vscode-button-hoverBackground);
+  --label-fg: var(--vscode-editor-foreground);
+  --border: var(--vscode-panel-border);
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--vscode-font-family);
+  padding: 20px 30px;
+  max-width: 600px;
+}
+h2 { margin-bottom: 20px; }
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  color: var(--label-fg);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.field input {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 2px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.field input:focus {
+  outline: 1px solid var(--btn-bg);
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--label-fg);
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrapper input {
+  flex: 1;
+  padding-right: 36px;
+}
+.eye-toggle {
+  position: absolute;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--fg);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.eye-toggle:hover { opacity: 0.9; }
+.icon-eye-off { display: none; }
+.eye-toggle.showing .icon-eye { display: none; }
+.eye-toggle.showing .icon-eye-off { display: block; }
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.btn-primary {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: none;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 2px;
+}
+.btn-primary:hover { background: var(--btn-hover); }
+.btn-cancel {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 2px;
+}
+.btn-cancel:hover { opacity: 0.8; }
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}

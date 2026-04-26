@@ -1,0 +1,14 @@
+.claude/**
+.github/**
+.vscode/**
+src/**
+node_modules/**
+dist/**
+*.vsix
+pnpm-lock.yaml
+tsconfig.json
+README.zh-CN.md
+.gitignore
+.npmrc
+!docs/usage.png
+out/**/*.map

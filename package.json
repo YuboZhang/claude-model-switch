@@ -1,0 +1,146 @@
+{
+  "name": "claude-model-switch",
+  "displayName": "Claude Model Switch",
+  "description": "Switch Claude models easily by managing .claude/settings.local.json profiles",
+  "version": "0.0.1",
+  "publisher": "adams549659584",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adams549659584/claude-model-switch.git"
+  },
+  "homepage": "https://github.com/adams549659584/claude-model-switch",
+  "bugs": {
+    "url": "https://github.com/adams549659584/claude-model-switch/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-model-switch",
+          "title": "Claude Model Switch",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claude-model-switch": [
+        {
+          "id": "claudeModelSwitchProfiles",
+          "name": "Model Profiles"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "claudeModelSwitchProfiles",
+        "contents": "No model profiles yet. [Add a profile](command:claude-model-switch.addProfile)\n\nYou can also [import profiles](command:claude-model-switch.importProfiles) from a JSON file."
+      }
+    ],
+    "commands": [
+      {
+        "command": "claude-model-switch.addProfile",
+        "title": "Add Model Profile",
+        "icon": "$(add)"
+      },
+      {
+        "command": "claude-model-switch.switchProfile",
+        "title": "Switch to Model Profile",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "claude-model-switch.editProfile",
+        "title": "Edit Model Profile",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "claude-model-switch.deleteProfile",
+        "title": "Delete Model Profile",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "claude-model-switch.exportProfiles",
+        "title": "Export Model Profiles",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "claude-model-switch.importProfiles",
+        "title": "Import Model Profiles",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "claude-model-switch.clearSettings",
+        "title": "Clear Model Settings",
+        "icon": "$(notebook-delete-cell)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claude-model-switch.addProfile",
+          "when": "view == claudeModelSwitchProfiles",
+          "group": "navigation"
+        },
+        {
+          "command": "claude-model-switch.exportProfiles",
+          "when": "view == claudeModelSwitchProfiles",
+          "group": "navigation"
+        },
+        {
+          "command": "claude-model-switch.importProfiles",
+          "when": "view == claudeModelSwitchProfiles",
+          "group": "navigation"
+        },
+        {
+          "command": "claude-model-switch.clearSettings",
+          "when": "view == claudeModelSwitchProfiles",
+          "group": "navigation@999"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "claude-model-switch.switchProfile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "group": "inline@1"
+        },
+        {
+          "command": "claude-model-switch.editProfile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "group": "inline@2"
+        },
+        {
+          "command": "claude-model-switch.deleteProfile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "group": "inline@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "build:prod": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify",
+    "watch": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
+    "lint": "tsc --noEmit",
+    "package:vsix": "pnpm run build:prod && node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && vsce package --no-dependencies --out dist/claude-model-switch.vsix",
+    "release:patch": "pnpm run build:prod && vsce publish patch --no-dependencies",
+    "release:minor": "pnpm run build:prod && vsce publish minor --no-dependencies",
+    "release:major": "pnpm run build:prod && vsce publish major --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.6.2"
+  }
+}
