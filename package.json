@@ -2,6 +2,7 @@
   "name": "claude-model-switch",
   "displayName": "Claude Model Switch",
   "description": "Switch Claude models easily by managing .claude/settings.local.json profiles",
+  "icon": "media/logo.png",
   "version": "0.0.1",
   "publisher": "adams549659584",
   "license": "MIT",
@@ -64,6 +65,11 @@
         "icon": "$(edit)"
       },
       {
+        "command": "claude-model-switch.copyProfile",
+        "title": "Copy Model Profile",
+        "icon": "$(copy)"
+      },
+      {
         "command": "claude-model-switch.deleteProfile",
         "title": "Delete Model Profile",
         "icon": "$(trash)"
@@ -119,9 +125,14 @@
           "group": "inline@2"
         },
         {
-          "command": "claude-model-switch.deleteProfile",
+          "command": "claude-model-switch.copyProfile",
           "when": "view == claudeModelSwitchProfiles && viewItem == profile",
           "group": "inline@3"
+        },
+        {
+          "command": "claude-model-switch.deleteProfile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "group": "inline@4"
         }
       ]
     }

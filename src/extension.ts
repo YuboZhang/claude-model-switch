@@ -13,6 +13,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const treeView = vscode.window.createTreeView('claudeModelSwitchProfiles', {
     treeDataProvider: treeProvider,
+    dragAndDropController: treeProvider,
     showCollapseAll: false,
   });
 

@@ -3,7 +3,12 @@ import { Profile, maskToken } from '../models/profile';
 import { ProfileStore } from '../storage/profileStore';
 import { SettingsWriter } from '../storage/settingsWriter';
 
-export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileItem> {
+const PROFILE_MIME_TYPE = 'application/vnd.code.tree.claudeModelSwitchProfiles';
+
+export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileItem>, vscode.TreeDragAndDropController<ProfileItem> {
+  readonly dragMimeTypes = [PROFILE_MIME_TYPE];
+  readonly dropMimeTypes = [PROFILE_MIME_TYPE];
+
   private _onDidChangeTreeData = new vscode.EventEmitter<ProfileItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -21,6 +26,7 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     const isActive = element.profile.id === activeId;
 
     const item = new vscode.TreeItem(element.profile.name, vscode.TreeItemCollapsibleState.None);
+    item.id = element.profile.id;
     item.description = element.profile.model ?? '';
     item.contextValue = 'profile';
     item.tooltip = this.buildTooltip(element.profile, isActive);
@@ -36,6 +42,55 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
 
   getChildren(): ProfileItem[] {
     return this.store.getAll().map(p => new ProfileItem(p));
+  }
+
+  async handleDrag(source: readonly ProfileItem[], dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
+    const draggedIds = source.map(item => item.profile.id);
+    dataTransfer.set(PROFILE_MIME_TYPE, new vscode.DataTransferItem(JSON.stringify(draggedIds)));
+  }
+
+  async handleDrop(target: ProfileItem | undefined, dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
+    const transferItem = dataTransfer.get(PROFILE_MIME_TYPE);
+    if (!transferItem) return;
+
+    const rawValue = await transferItem.asString();
+    let draggedIds: string[];
+
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (!Array.isArray(parsed) || parsed.length === 0 || typeof parsed[0] !== 'string') {
+        return;
+      }
+      draggedIds = parsed;
+    } catch {
+      return;
+    }
+
+    const draggedId = draggedIds[0];
+    const profiles = this.store.getAll();
+    const fromIndex = profiles.findIndex(profile => profile.id === draggedId);
+    if (fromIndex < 0) return;
+
+    const targetId = target?.profile.id;
+    if (targetId === draggedId) return;
+
+    const reordered = [...profiles];
+    const [moved] = reordered.splice(fromIndex, 1);
+    if (!moved) return;
+
+    if (!targetId) {
+      reordered.push(moved);
+    } else {
+      const targetIndex = reordered.findIndex(profile => profile.id === targetId);
+      if (targetIndex < 0) {
+        reordered.push(moved);
+      } else {
+        reordered.splice(targetIndex, 0, moved);
+      }
+    }
+
+    this.store.setAll(reordered);
+    this.refresh();
   }
 
   private buildTooltip(profile: Profile, isActive: boolean): string {

@@ -21,7 +21,7 @@ export function registerCommands(
 
   context.subscriptions.push(
     vscode.commands.registerCommand('claude-model-switch.addProfile', () => {
-      WebviewPanel.createOrShow(context.extensionUri, store, undefined, () => {
+      WebviewPanel.createOrShow(context.extensionUri, store, { mode: 'create' }, () => {
         refreshAll();
       });
     }),
@@ -60,7 +60,14 @@ export function registerCommands(
 
     vscode.commands.registerCommand('claude-model-switch.editProfile', (item?: { profile: Profile }) => {
       if (!item?.profile) return;
-      WebviewPanel.createOrShow(context.extensionUri, store, item.profile, () => {
+      WebviewPanel.createOrShow(context.extensionUri, store, { mode: 'edit', profile: item.profile }, () => {
+        refreshAll();
+      });
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.copyProfile', (item?: { profile: Profile }) => {
+      if (!item?.profile) return;
+      WebviewPanel.createOrShow(context.extensionUri, store, { mode: 'copy', profile: item.profile }, () => {
         refreshAll();
       });
     }),

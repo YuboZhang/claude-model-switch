@@ -29,6 +29,10 @@ export class ProfileStore {
     }
   }
 
+  setAll(profiles: Profile[]): void {
+    this.context.globalState.update(STORAGE_KEY, [...profiles]);
+  }
+
   delete(id: string): void {
     const profiles = this.getAll().filter(p => p.id !== id);
     this.context.globalState.update(STORAGE_KEY, profiles);

@@ -4,6 +4,13 @@ import * as path from 'path';
 import { Profile, generateId } from '../models/profile';
 import { ProfileStore } from '../storage/profileStore';
 
+type WebviewMode = 'create' | 'edit' | 'copy';
+
+interface WebviewPanelOptions {
+  mode: WebviewMode;
+  profile?: Profile;
+}
+
 export class WebviewPanel {
   public static currentPanel: WebviewPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
@@ -13,7 +20,7 @@ export class WebviewPanel {
     panel: vscode.WebviewPanel,
     private extensionUri: vscode.Uri,
     private store: ProfileStore,
-    private existingProfile: Profile | undefined,
+    private options: WebviewPanelOptions,
     private onSave: (profile: Profile) => void,
   ) {
     this.panel = panel;
@@ -24,8 +31,8 @@ export class WebviewPanel {
         switch (msg.type) {
           case 'save': {
             const profile: Profile = msg.profile;
-            if (this.existingProfile) {
-              profile.id = this.existingProfile.id;
+            if (this.options.mode === 'edit' && this.options.profile) {
+              profile.id = this.options.profile.id;
               this.store.update(profile);
             } else {
               if (!profile.id) {
@@ -51,16 +58,20 @@ export class WebviewPanel {
   public static createOrShow(
     extensionUri: vscode.Uri,
     store: ProfileStore,
-    existingProfile: Profile | undefined,
+    options: WebviewPanelOptions,
     onSave: (profile: Profile) => void,
   ): WebviewPanel {
     if (WebviewPanel.currentPanel) {
       WebviewPanel.currentPanel.panel.dispose();
     }
 
+    const title = options.mode === 'edit'
+      ? `Edit: ${options.profile?.name ?? ''}`
+      : 'Add Model Profile';
+
     const panel = vscode.window.createWebviewPanel(
       'claudeModelSwitchEdit',
-      existingProfile ? `Edit: ${existingProfile.name}` : 'Add Model Profile',
+      title,
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -68,7 +79,7 @@ export class WebviewPanel {
       },
     );
 
-    WebviewPanel.currentPanel = new WebviewPanel(panel, extensionUri, store, existingProfile, onSave);
+    WebviewPanel.currentPanel = new WebviewPanel(panel, extensionUri, store, options, onSave);
     return WebviewPanel.currentPanel;
   }
 
@@ -82,7 +93,8 @@ export class WebviewPanel {
 
   private getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     const nonce = getNonce();
-    const profile = this.existingProfile;
+    const profile = this.options.profile;
+    const isEdit = this.options.mode === 'edit';
 
     const mediaDir = path.join(extensionUri.fsPath, 'media');
     const htmlTemplate = fs.readFileSync(path.join(mediaDir, 'webview.html'), 'utf-8');
@@ -95,8 +107,8 @@ export class WebviewPanel {
     html = html.replace('{{cssSrc}}', cssUri.toString());
     html = html.replace('{{cssUri}}', cssUri.toString());
     html = html.replace('{{jsUri}}', jsUri.toString());
-    html = html.replace('{{title}}', profile ? 'Edit Profile' : 'Add Profile');
-    html = html.replace('{{heading}}', profile ? 'Edit Model Profile' : 'Add Model Profile');
+    html = html.replace('{{title}}', isEdit ? 'Edit Profile' : 'Add Profile');
+    html = html.replace('{{heading}}', isEdit ? 'Edit Model Profile' : 'Add Model Profile');
     html = html.replace('{{name}}', escapeAttr(profile?.name ?? ''));
     html = html.replace('{{model}}', escapeAttr(profile?.model ?? ''));
     html = html.replace('{{ANTHROPIC_AUTH_TOKEN}}', escapeAttr(profile?.env?.ANTHROPIC_AUTH_TOKEN ?? ''));
