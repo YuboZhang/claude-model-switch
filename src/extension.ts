@@ -6,6 +6,9 @@ import { StatusBar } from './ui/statusBar';
 import { registerCommands } from './commands/registerCommands';
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Enable VS Code Settings Sync for profiles across devices
+  context.globalState.setKeysForSync(['claudeModelSwitchProfiles']);
+
   const store = new ProfileStore(context);
   const writer = new SettingsWriter();
   const treeProvider = new ProfileTreeDataProvider(store, writer);
