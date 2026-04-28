@@ -14,7 +14,7 @@ This extension can save those settings and switch between models. It updates the
 
 ## Features
 
-- **Model Profile Management**: Add, edit, and delete model profiles with all Claude environment variables
+- **Model Profile Management**: Add, edit, and delete model profiles
 - **Per-Project Switching**: Each project can use a different model — switch instantly without affecting others
 - **Status Bar**: Shows the current active model in the bottom status bar
 - **Tree View Sidebar**: Lists all profiles with inline action buttons (switch, edit, delete)
