@@ -3,7 +3,7 @@
   "displayName": "Claude Model Switch",
   "description": "Switch Claude models easily by managing .claude/settings.local.json profiles",
   "icon": "media/logo.png",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "adams549659584",
   "license": "MIT",
   "repository": {
