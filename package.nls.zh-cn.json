@@ -1,0 +1,15 @@
+{
+  "extension.description": "通过管理 .claude/settings.local.json 配置轻松切换 Claude 模型",
+  "view.profiles.name": "模型配置",
+  "view.profiles.welcome": "暂无模型配置。[添加配置](command:claude-model-switch.addProfile)\n\n也可以从 JSON 文件[导入配置](command:claude-model-switch.importProfiles)。",
+  "command.addProfile.title": "添加模型配置",
+  "command.switchProfile.title": "切换模型配置",
+  "command.editProfile.title": "编辑模型配置",
+  "command.copyProfile.title": "复制模型配置",
+  "command.deleteProfile.title": "删除模型配置",
+  "command.testProfileSpeed.title": "测速",
+  "command.testAllProfilesSpeed.title": "全部测速",
+  "command.exportProfiles.title": "导出模型配置",
+  "command.importProfiles.title": "导入模型配置",
+  "command.clearSettings.title": "清除模型设置"
+}

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { l10n } from '../i18n';
 import { Profile } from '../models/profile';
 
 const STORAGE_KEY = 'claudeModelSwitchProfiles';
@@ -47,7 +48,7 @@ export class ProfileStore {
     try {
       parsed = JSON.parse(jsonStr);
     } catch {
-      vscode.window.showErrorMessage('Invalid JSON file');
+      vscode.window.showErrorMessage(l10n('invalidJsonFile'));
       return { imported: 0, skipped: 0 };
     }
 

@@ -1,0 +1,15 @@
+{
+  "extension.description": "Easily switch Claude models by managing .claude/settings.local.json",
+  "view.profiles.name": "Model Profiles",
+  "view.profiles.welcome": "No model profiles. [Add Profile](command:claude-model-switch.addProfile)\n\nYou can also [Import Profiles](command:claude-model-switch.importProfiles) from a JSON file.",
+  "command.addProfile.title": "Add Model Profile",
+  "command.switchProfile.title": "Switch Model Profile",
+  "command.editProfile.title": "Edit Model Profile",
+  "command.copyProfile.title": "Copy Model Profile",
+  "command.deleteProfile.title": "Delete Model Profile",
+  "command.testProfileSpeed.title": "Speed Test",
+  "command.testAllProfilesSpeed.title": "Test All Speeds",
+  "command.exportProfiles.title": "Export Model Profiles",
+  "command.importProfiles.title": "Import Model Profiles",
+  "command.clearSettings.title": "Clear Model Settings"
+}

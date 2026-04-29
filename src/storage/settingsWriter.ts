@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { l10n } from '../i18n';
 import { Profile, ProfileEnv } from '../models/profile';
 
 const ACTIVE_PROFILE_FILENAME = '.claude-model-switch-active.json';
@@ -33,7 +34,7 @@ export class SettingsWriter {
   async switchToProfile(profile: Profile): Promise<void> {
     const root = this.getWorkspaceRoot();
     if (!root) {
-      vscode.window.showErrorMessage('No workspace folder open');
+      vscode.window.showErrorMessage(l10n('noWorkspaceFolder'));
       return;
     }
 
@@ -107,7 +108,7 @@ export class SettingsWriter {
   async clearSettings(): Promise<void> {
     const root = this.getWorkspaceRoot();
     if (!root) {
-      vscode.window.showErrorMessage('No workspace folder open');
+      vscode.window.showErrorMessage(l10n('noWorkspaceFolder'));
       return;
     }
 
@@ -122,7 +123,7 @@ export class SettingsWriter {
 
     // Remove model and env fields from settings.local.json
     if (!fs.existsSync(settingsPath)) {
-      vscode.window.showInformationMessage('No settings.local.json found');
+      vscode.window.showInformationMessage(l10n('noSettingsFile'));
       return;
     }
 
@@ -139,9 +140,9 @@ export class SettingsWriter {
         }
       }
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-      vscode.window.showInformationMessage('Model settings cleared');
+      vscode.window.showInformationMessage(l10n('modelSettingsCleared'));
     } catch {
-      vscode.window.showErrorMessage('Failed to parse settings.local.json');
+      vscode.window.showErrorMessage(l10n('parseSettingsFailed'));
     }
   }
 }

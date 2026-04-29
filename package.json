@@ -1,7 +1,7 @@
 {
   "name": "claude-model-switch",
   "displayName": "Claude Model Switch",
-  "description": "Switch Claude models easily by managing .claude/settings.local.json profiles",
+  "description": "%extension.description%",
   "icon": "media/logo.png",
   "version": "1.2.1",
   "publisher": "adams549659584",
@@ -38,55 +38,65 @@
       "claude-model-switch": [
         {
           "id": "claudeModelSwitchProfiles",
-          "name": "Model Profiles"
+          "name": "%view.profiles.name%"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "claudeModelSwitchProfiles",
-        "contents": "No model profiles yet. [Add a profile](command:claude-model-switch.addProfile)\n\nYou can also [import profiles](command:claude-model-switch.importProfiles) from a JSON file."
+        "contents": "%view.profiles.welcome%"
       }
     ],
     "commands": [
       {
         "command": "claude-model-switch.addProfile",
-        "title": "Add Model Profile",
+        "title": "%command.addProfile.title%",
         "icon": "$(add)"
       },
       {
         "command": "claude-model-switch.switchProfile",
-        "title": "Switch to Model Profile",
+        "title": "%command.switchProfile.title%",
         "icon": "$(zap)"
       },
       {
         "command": "claude-model-switch.editProfile",
-        "title": "Edit Model Profile",
+        "title": "%command.editProfile.title%",
         "icon": "$(edit)"
       },
       {
         "command": "claude-model-switch.copyProfile",
-        "title": "Copy Model Profile",
+        "title": "%command.copyProfile.title%",
         "icon": "$(copy)"
       },
       {
         "command": "claude-model-switch.deleteProfile",
-        "title": "Delete Model Profile",
+        "title": "%command.deleteProfile.title%",
         "icon": "$(trash)"
       },
       {
+        "command": "claude-model-switch.testProfileSpeed",
+        "title": "%command.testProfileSpeed.title%",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "claude-model-switch.testAllProfilesSpeed",
+        "title": "%command.testAllProfilesSpeed.title%",
+        "icon": "$(pulse)"
+      },
+      {
         "command": "claude-model-switch.exportProfiles",
-        "title": "Export Model Profiles",
+        "title": "%command.exportProfiles.title%",
         "icon": "$(cloud-download)"
       },
       {
         "command": "claude-model-switch.importProfiles",
-        "title": "Import Model Profiles",
+        "title": "%command.importProfiles.title%",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "claude-model-switch.clearSettings",
-        "title": "Clear Model Settings",
+        "title": "%command.clearSettings.title%",
         "icon": "$(notebook-delete-cell)"
       }
     ],
@@ -106,6 +116,11 @@
           "command": "claude-model-switch.importProfiles",
           "when": "view == claudeModelSwitchProfiles",
           "group": "navigation"
+        },
+        {
+          "command": "claude-model-switch.testAllProfilesSpeed",
+          "when": "view == claudeModelSwitchProfiles",
+          "group": "navigation@10"
         },
         {
           "command": "claude-model-switch.clearSettings",
@@ -130,9 +145,14 @@
           "group": "inline@3"
         },
         {
-          "command": "claude-model-switch.deleteProfile",
+          "command": "claude-model-switch.testProfileSpeed",
           "when": "view == claudeModelSwitchProfiles && viewItem == profile",
           "group": "inline@4"
+        },
+        {
+          "command": "claude-model-switch.deleteProfile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "group": "inline@5"
         }
       ]
     }
@@ -148,10 +168,13 @@
     "release:major": "pnpm run build:prod && vsce publish major --no-dependencies"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.6.2",
     "esbuild": "^0.20.0",
-    "typescript": "^5.3.0",
-    "@vscode/vsce": "^3.6.2"
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1"
   }
 }

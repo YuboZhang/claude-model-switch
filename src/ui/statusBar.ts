@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { l10n } from '../i18n';
 import { ProfileStore } from '../storage/profileStore';
 import { SettingsWriter } from '../storage/settingsWriter';
 
@@ -22,19 +23,19 @@ export class StatusBar {
       const profile = this.store.getById(activeId);
       if (profile) {
         this.item.text = `$(symbol-event) ${profile.name}`;
-        this.item.tooltip = `Claude Model: ${profile.name}\nClick to switch`;
+        this.item.tooltip = l10n('statusTooltipProfile', profile.name);
         return;
       }
     }
 
     if (currentModel) {
       this.item.text = `$(symbol-event) ${currentModel}`;
-      this.item.tooltip = `Claude Model: ${currentModel} (unmatched profile)\nClick to switch`;
+      this.item.tooltip = l10n('statusTooltipUnmatchedModel', currentModel);
       return;
     }
 
-    this.item.text = '$(symbol-event) No Model';
-    this.item.tooltip = 'No Claude model configured\nClick to switch';
+    this.item.text = `$(symbol-event) ${l10n('statusNoModel')}`;
+    this.item.tooltip = l10n('statusTooltipNoModel');
   }
 
   dispose(): void {

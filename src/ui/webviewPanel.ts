@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isChinese, l10n } from '../i18n';
 import { Profile, generateId } from '../models/profile';
 import { ProfileStore } from '../storage/profileStore';
 
@@ -66,8 +67,8 @@ export class WebviewPanel {
     }
 
     const title = options.mode === 'edit'
-      ? `Edit: ${options.profile?.name ?? ''}`
-      : 'Add Model Profile';
+      ? l10n('webviewEditPanelTitle', options.profile?.name ?? '')
+      : l10n('webviewAddPanelTitle');
 
     const panel = vscode.window.createWebviewPanel(
       'claudeModelSwitchEdit',
@@ -107,8 +108,16 @@ export class WebviewPanel {
     html = html.replace('{{cssSrc}}', cssUri.toString());
     html = html.replace('{{cssUri}}', cssUri.toString());
     html = html.replace('{{jsUri}}', jsUri.toString());
-    html = html.replace('{{title}}', isEdit ? 'Edit Profile' : 'Add Profile');
-    html = html.replace('{{heading}}', isEdit ? 'Edit Model Profile' : 'Add Model Profile');
+    html = html.replace('{{htmlLang}}', isChinese() ? 'zh-CN' : 'en');
+    html = html.replace('{{title}}', isEdit ? l10n('webviewEditTitle') : l10n('webviewAddTitle'));
+    html = html.replace('{{heading}}', isEdit ? l10n('webviewEditHeading') : l10n('webviewAddHeading'));
+    html = html.replace('{{environmentVariables}}', l10n('webviewEnvironmentVariables'));
+    html = html.replace('{{profileName}}', l10n('webviewProfileName'));
+    html = html.replace('{{nameHint}}', l10n('webviewNameHint'));
+    html = html.replace('{{save}}', l10n('webviewSave'));
+    html = html.replace('{{cancel}}', l10n('webviewCancel'));
+    html = html.replace('{{showHide}}', l10n('webviewShowHide'));
+    html = html.replace('{{unnamed}}', escapeAttr(l10n('webviewUnnamed')));
     html = html.replace('{{name}}', escapeAttr(profile?.name ?? ''));
     html = html.replace('{{model}}', escapeAttr(profile?.model ?? ''));
     html = html.replace('{{ANTHROPIC_AUTH_TOKEN}}', escapeAttr(profile?.env?.ANTHROPIC_AUTH_TOKEN ?? ''));

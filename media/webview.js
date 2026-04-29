@@ -17,7 +17,7 @@ document.getElementById('saveBtn').addEventListener('click', function() {
   const model = document.getElementById('model').value;
   let name = document.getElementById('name').value.trim();
   if (!name) {
-    name = model || 'Unnamed';
+    name = model || document.body.dataset.unnamed || 'Unnamed';
   }
 
   const profile = {
