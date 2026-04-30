@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import Anthropic from '@anthropic-ai/sdk';
 import { l10n } from '../i18n';
 import { Profile } from '../models/profile';
@@ -14,11 +17,24 @@ export interface SpeedTestResult {
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_CONCURRENCY = 3;
+const USER_SETTINGS_PATH = path.join(os.homedir(), '.claude', 'settings.json');
+
+interface ClaudeUserSettings {
+  model?: unknown;
+  env?: Record<string, unknown>;
+}
+
+interface ResolvedSpeedConfig {
+  model?: string;
+  token?: string;
+  baseURL?: string;
+}
 
 export class SpeedTester {
   async testProfile(profile: Profile, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<SpeedTestResult> {
     const startedAt = Date.now();
-    const model = this.resolveModel(profile);
+    const config = this.resolveConfig(profile);
+    const model = config.model;
 
     if (!model) {
       return {
@@ -29,19 +45,8 @@ export class SpeedTester {
       };
     }
 
-    const token = profile.env.ANTHROPIC_AUTH_TOKEN?.trim();
-    if (!token) {
-      return {
-        profile,
-        status: 'error',
-        durationMs: 0,
-        model,
-        error: l10n('speedMissingAuthToken'),
-      };
-    }
-
     try {
-      const client = this.createClient(profile, token, timeoutMs);
+      const client = this.createClient(config, timeoutMs);
       const response = await client.messages.create({
         model,
         max_tokens: 1,
@@ -91,22 +96,62 @@ export class SpeedTester {
     return results;
   }
 
-  private resolveModel(profile: Profile): string | undefined {
-    return profile.env.ANTHROPIC_MODEL?.trim() || profile.model?.trim() || undefined;
+  private resolveConfig(profile: Profile): ResolvedSpeedConfig {
+    const userSettings = this.readClaudeUserSettings();
+    const userEnv = userSettings?.env;
+    const token = this.trimString(profile.env.ANTHROPIC_AUTH_TOKEN)
+      || this.trimString(userEnv?.ANTHROPIC_AUTH_TOKEN)
+      || this.trimString(userEnv?.ANTHROPIC_API_KEY)
+      || undefined;
+
+    return {
+      model: this.trimString(profile.env.ANTHROPIC_MODEL)
+        || this.trimString(profile.model)
+        || this.trimString(userEnv?.ANTHROPIC_MODEL)
+        || this.trimString(userSettings?.model)
+        || undefined,
+      token,
+      baseURL: this.trimString(profile.env.ANTHROPIC_BASE_URL)
+        || this.trimString(userEnv?.ANTHROPIC_BASE_URL)
+        || undefined,
+    };
   }
 
-  private createClient(profile: Profile, token: string, timeoutMs: number): Anthropic {
-    const baseURL = this.normalizeBaseURL(profile.env.ANTHROPIC_BASE_URL);
-    const authOptions = token.startsWith('sk-ant-')
-      ? { apiKey: token, authToken: null }
-      : { apiKey: null, authToken: token };
+  private createClient(config: ResolvedSpeedConfig, timeoutMs: number): Anthropic {
+    const baseURL = this.normalizeBaseURL(config.baseURL);
+    const authOptions = this.resolveAuthOptions(config.token);
 
     return new Anthropic({
       ...authOptions,
       baseURL,
       timeout: timeoutMs,
       maxRetries: 0,
+      defaultHeaders: config.token ? undefined : { 'X-Api-Key': null, Authorization: null },
     });
+  }
+
+  private resolveAuthOptions(token?: string): { apiKey: string | null; authToken: string | null } {
+    if (!token) return { apiKey: null, authToken: null };
+    return token.startsWith('sk-ant-')
+      ? { apiKey: token, authToken: null }
+      : { apiKey: null, authToken: token };
+  }
+
+  private readClaudeUserSettings(): ClaudeUserSettings | undefined {
+    if (!fs.existsSync(USER_SETTINGS_PATH)) return undefined;
+
+    try {
+      const settings = JSON.parse(fs.readFileSync(USER_SETTINGS_PATH, 'utf-8')) as ClaudeUserSettings;
+      return settings && typeof settings === 'object' ? settings : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private trimString(value: unknown): string | undefined {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed || undefined;
   }
 
   private normalizeBaseURL(baseURL?: string): string | undefined {
