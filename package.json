@@ -85,6 +85,46 @@
         "icon": "$(pulse)"
       },
       {
+        "command": "claude-model-switch.toggleAllSpeedTestProfiles",
+        "title": "%command.toggleAllSpeedTestProfiles.title%",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "claude-model-switch.startSelectedProfilesSpeedTest",
+        "title": "%command.startSelectedProfilesSpeedTest.title%",
+        "icon": "$(play)"
+      },
+      {
+        "command": "claude-model-switch.cancelSpeedTestSelection",
+        "title": "%command.cancelSpeedTestSelection.title%",
+        "icon": "$(close)"
+      },
+      {
+        "command": "claude-model-switch.deleteModelProfiles",
+        "title": "%command.deleteModelProfiles.title%",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "claude-model-switch.toggleAllDeleteProfiles",
+        "title": "%command.toggleAllDeleteProfiles.title%",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "claude-model-switch.startSelectedProfilesDelete",
+        "title": "%command.startSelectedProfilesDelete.title%",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "claude-model-switch.cancelDeleteProfileSelection",
+        "title": "%command.cancelDeleteProfileSelection.title%",
+        "icon": "$(close)"
+      },
+      {
+        "command": "claude-model-switch.clearWorkspaceModelSettings",
+        "title": "%command.clearWorkspaceModelSettings.title%",
+        "icon": "$(discard)"
+      },
+      {
         "command": "claude-model-switch.exportProfiles",
         "title": "%command.exportProfiles.title%",
         "icon": "$(cloud-download)"
@@ -93,65 +133,95 @@
         "command": "claude-model-switch.importProfiles",
         "title": "%command.importProfiles.title%",
         "icon": "$(cloud-upload)"
-      },
-      {
-        "command": "claude-model-switch.clearSettings",
-        "title": "%command.clearSettings.title%",
-        "icon": "$(notebook-delete-cell)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "claude-model-switch.addProfile",
-          "when": "view == claudeModelSwitchProfiles",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "navigation"
         },
         {
           "command": "claude-model-switch.exportProfiles",
-          "when": "view == claudeModelSwitchProfiles",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "navigation"
         },
         {
           "command": "claude-model-switch.importProfiles",
-          "when": "view == claudeModelSwitchProfiles",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "navigation"
         },
         {
           "command": "claude-model-switch.testAllProfilesSpeed",
-          "when": "view == claudeModelSwitchProfiles",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "navigation@10"
         },
         {
-          "command": "claude-model-switch.clearSettings",
-          "when": "view == claudeModelSwitchProfiles",
+          "command": "claude-model-switch.toggleAllSpeedTestProfiles",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.speedSelectionMode",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claude-model-switch.startSelectedProfilesSpeedTest",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.speedSelectionMode",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claude-model-switch.cancelSpeedTestSelection",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.speedSelectionMode",
+          "group": "navigation@3"
+        },
+        {
+          "command": "claude-model-switch.deleteModelProfiles",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
+          "group": "navigation@900"
+        },
+        {
+          "command": "claude-model-switch.clearWorkspaceModelSettings",
+          "when": "view == claudeModelSwitchProfiles && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "navigation@999"
+        },
+        {
+          "command": "claude-model-switch.toggleAllDeleteProfiles",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.deleteSelectionMode",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claude-model-switch.startSelectedProfilesDelete",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.deleteSelectionMode",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claude-model-switch.cancelDeleteProfileSelection",
+          "when": "view == claudeModelSwitchProfiles && claudeModelSwitch.deleteSelectionMode",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
           "command": "claude-model-switch.switchProfile",
-          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "inline@1"
         },
         {
           "command": "claude-model-switch.editProfile",
-          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "inline@2"
         },
         {
           "command": "claude-model-switch.copyProfile",
-          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "inline@3"
         },
         {
           "command": "claude-model-switch.testProfileSpeed",
-          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "inline@4"
         },
         {
           "command": "claude-model-switch.deleteProfile",
-          "when": "view == claudeModelSwitchProfiles && viewItem == profile",
+          "when": "view == claudeModelSwitchProfiles && viewItem == profile && !claudeModelSwitch.speedSelectionMode && !claudeModelSwitch.deleteSelectionMode",
           "group": "inline@5"
         }
       ]

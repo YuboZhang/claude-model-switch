@@ -52,3 +52,12 @@ jobs:
         run: |
           git push origin HEAD
           git push origin --tags
+
+      - name: Package VSIX
+        run: pnpm run package:vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-model-switch-vsix
+          path: dist/claude-model-switch.vsix

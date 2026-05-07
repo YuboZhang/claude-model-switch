@@ -8,8 +8,15 @@
   "command.copyProfile.title": "Copy Model Profile",
   "command.deleteProfile.title": "Delete Model Profile",
   "command.testProfileSpeed.title": "Speed Test",
-  "command.testAllProfilesSpeed.title": "Test All Speeds",
+  "command.testAllProfilesSpeed.title": "Speed Test",
+  "command.toggleAllSpeedTestProfiles.title": "Select All/None",
+  "command.startSelectedProfilesSpeedTest.title": "Start Test",
+  "command.cancelSpeedTestSelection.title": "Cancel",
+  "command.deleteModelProfiles.title": "Delete Model Profiles",
+  "command.toggleAllDeleteProfiles.title": "Select All/None",
+  "command.startSelectedProfilesDelete.title": "Delete Selected",
+  "command.cancelDeleteProfileSelection.title": "Cancel",
+  "command.clearWorkspaceModelSettings.title": "Discard Workspace Model Settings",
   "command.exportProfiles.title": "Export Model Profiles",
-  "command.importProfiles.title": "Import Model Profiles",
-  "command.clearSettings.title": "Clear Model Settings"
+  "command.importProfiles.title": "Import Model Profiles"
 }

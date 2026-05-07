@@ -8,8 +8,15 @@
   "command.copyProfile.title": "复制模型配置",
   "command.deleteProfile.title": "删除模型配置",
   "command.testProfileSpeed.title": "测速",
-  "command.testAllProfilesSpeed.title": "全部测速",
+  "command.testAllProfilesSpeed.title": "测速",
+  "command.toggleAllSpeedTestProfiles.title": "全选/全不选",
+  "command.startSelectedProfilesSpeedTest.title": "开始测速",
+  "command.cancelSpeedTestSelection.title": "取消",
+  "command.deleteModelProfiles.title": "删除模型配置",
+  "command.toggleAllDeleteProfiles.title": "全选/全不选",
+  "command.startSelectedProfilesDelete.title": "删除",
+  "command.cancelDeleteProfileSelection.title": "取消",
+  "command.clearWorkspaceModelSettings.title": "丢弃工作区模型设置",
   "command.exportProfiles.title": "导出模型配置",
-  "command.importProfiles.title": "导入模型配置",
-  "command.clearSettings.title": "清除模型设置"
+  "command.importProfiles.title": "导入模型配置"
 }

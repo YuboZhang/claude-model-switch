@@ -7,6 +7,7 @@ import { SettingsWriter } from '../storage/settingsWriter';
 const PROFILE_MIME_TYPE = 'application/vnd.code.tree.claudeModelSwitchProfiles';
 
 type SpeedResultStatus = 'success' | 'error';
+type SelectionMode = 'none' | 'speedTest' | 'deleteProfiles';
 
 interface ProfileSpeedResult {
   status: SpeedResultStatus;
@@ -21,6 +22,9 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
   private _onDidChangeTreeData = new vscode.EventEmitter<ProfileItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
   private speedResults = new Map<string, ProfileSpeedResult>();
+  private selectionMode: SelectionMode = 'none';
+  private speedTestExcludedProfileIds = new Set<string>();
+  private deleteExcludedProfileIds = new Set<string>();
 
   constructor(
     private store: ProfileStore,
@@ -43,6 +47,61 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     this.refresh();
   }
 
+  isSpeedSelectionMode(): boolean {
+    return this.selectionMode === 'speedTest';
+  }
+
+  isDeleteSelectionMode(): boolean {
+    return this.selectionMode === 'deleteProfiles';
+  }
+
+  enterSpeedSelectionMode(): void {
+    this.selectionMode = 'speedTest';
+    this.refresh();
+  }
+
+  enterDeleteSelectionMode(): void {
+    this.selectionMode = 'deleteProfiles';
+    this.refresh();
+  }
+
+  exitSelectionMode(): void {
+    this.selectionMode = 'none';
+    this.refresh();
+  }
+
+  toggleAllSpeedTestProfiles(): void {
+    this.toggleAll(this.speedTestExcludedProfileIds, 'speedTest');
+  }
+
+  toggleAllDeleteProfiles(): void {
+    this.toggleAll(this.deleteExcludedProfileIds, 'deleteProfiles');
+  }
+
+  toggleSpeedTestProfile(profileId: string): void {
+    this.toggleProfile(this.speedTestExcludedProfileIds, profileId, 'speedTest');
+  }
+
+  toggleDeleteProfile(profileId: string): void {
+    this.toggleProfile(this.deleteExcludedProfileIds, profileId, 'deleteProfiles');
+  }
+
+  setSpeedTestSelection(profileId: string, selected: boolean): void {
+    this.setProfileSelection(this.speedTestExcludedProfileIds, profileId, selected, 'speedTest');
+  }
+
+  setDeleteSelection(profileId: string, selected: boolean): void {
+    this.setProfileSelection(this.deleteExcludedProfileIds, profileId, selected, 'deleteProfiles');
+  }
+
+  getSpeedTestSelectedProfiles(): Profile[] {
+    return this.getSelectedProfiles(this.speedTestExcludedProfileIds);
+  }
+
+  getDeleteSelectedProfiles(): Profile[] {
+    return this.getSelectedProfiles(this.deleteExcludedProfileIds);
+  }
+
   getTreeItem(element: ProfileItem): vscode.TreeItem {
     const activeId = this.writer.getActiveProfileId();
     const isActive = element.profile.id === activeId;
@@ -54,12 +113,29 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     item.contextValue = 'profile';
     item.tooltip = this.buildTooltip(element.profile, isActive, speedResult);
     item.iconPath = this.buildIcon(isActive, speedResult);
+    if (this.selectionMode !== 'none') {
+      const excludedIds = this.getSelectionExcludedIds();
+      item.checkboxState = excludedIds.has(element.profile.id)
+        ? vscode.TreeItemCheckboxState.Unchecked
+        : vscode.TreeItemCheckboxState.Checked;
+      item.command = {
+        command: this.selectionMode === 'speedTest'
+          ? 'claude-model-switch.toggleSpeedTestProfile'
+          : 'claude-model-switch.toggleDeleteProfileSelection',
+        title: '',
+        arguments: [element],
+      };
+    }
 
     return item;
   }
 
   getChildren(): ProfileItem[] {
-    return this.store.getAll().map(p => new ProfileItem(p));
+    const profiles = this.store.getAll();
+    const profileIds = new Set(profiles.map(profile => profile.id));
+    this.removeMissingProfileIds(this.speedTestExcludedProfileIds, profileIds);
+    this.removeMissingProfileIds(this.deleteExcludedProfileIds, profileIds);
+    return profiles.map(p => new ProfileItem(p));
   }
 
   async handleDrag(source: readonly ProfileItem[], dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
@@ -109,6 +185,57 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
 
     this.store.setAll(reordered);
     this.refresh();
+  }
+
+  private toggleAll(excludedIds: Set<string>, mode: SelectionMode): void {
+    if (this.selectionMode !== mode) return;
+    const profiles = this.store.getAll();
+    const hasUnselectedProfile = profiles.some(profile => excludedIds.has(profile.id));
+    excludedIds.clear();
+    if (!hasUnselectedProfile) {
+      for (const profile of profiles) {
+        excludedIds.add(profile.id);
+      }
+    }
+    this.refresh();
+  }
+
+  private toggleProfile(excludedIds: Set<string>, profileId: string, mode: SelectionMode): void {
+    if (this.selectionMode !== mode) return;
+    if (excludedIds.has(profileId)) {
+      excludedIds.delete(profileId);
+    } else {
+      excludedIds.add(profileId);
+    }
+    this.refresh();
+  }
+
+  private setProfileSelection(excludedIds: Set<string>, profileId: string, selected: boolean, mode: SelectionMode): void {
+    if (this.selectionMode !== mode) return;
+    if (selected) {
+      excludedIds.delete(profileId);
+    } else {
+      excludedIds.add(profileId);
+    }
+    this.refresh();
+  }
+
+  private getSelectedProfiles(excludedIds: Set<string>): Profile[] {
+    return this.store.getAll().filter(profile => !excludedIds.has(profile.id));
+  }
+
+  private getSelectionExcludedIds(): Set<string> {
+    return this.selectionMode === 'speedTest'
+      ? this.speedTestExcludedProfileIds
+      : this.deleteExcludedProfileIds;
+  }
+
+  private removeMissingProfileIds(excludedIds: Set<string>, profileIds: Set<string>): void {
+    for (const profileId of excludedIds) {
+      if (!profileIds.has(profileId)) {
+        excludedIds.delete(profileId);
+      }
+    }
   }
 
   private buildDescription(profile: Profile, speedResult?: ProfileSpeedResult): string {

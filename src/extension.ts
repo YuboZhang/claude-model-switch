@@ -18,9 +18,26 @@ export function activate(context: vscode.ExtensionContext): void {
     treeDataProvider: treeProvider,
     dragAndDropController: treeProvider,
     showCollapseAll: false,
+    manageCheckboxStateManually: true,
   });
 
-  context.subscriptions.push(treeView, statusBar);
+  void vscode.commands.executeCommand('setContext', 'claudeModelSwitch.speedSelectionMode', false);
+  void vscode.commands.executeCommand('setContext', 'claudeModelSwitch.deleteSelectionMode', false);
+
+  context.subscriptions.push(
+    treeView,
+    treeView.onDidChangeCheckboxState(event => {
+      for (const [item, state] of event.items) {
+        const selected = state === vscode.TreeItemCheckboxState.Checked;
+        if (treeProvider.isSpeedSelectionMode()) {
+          treeProvider.setSpeedTestSelection(item.profile.id, selected);
+        } else if (treeProvider.isDeleteSelectionMode()) {
+          treeProvider.setDeleteSelection(item.profile.id, selected);
+        }
+      }
+    }),
+    statusBar,
+  );
 
   registerCommands(context, store, writer, treeProvider, statusBar);
 

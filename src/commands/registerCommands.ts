@@ -9,6 +9,9 @@ import { exportProfiles, importProfiles } from '../ui/importExport';
 import { SpeedTester, SpeedTestResult } from '../services/speedTester';
 import { l10n } from '../i18n';
 
+const SPEED_SELECTION_CONTEXT = 'claudeModelSwitch.speedSelectionMode';
+const DELETE_SELECTION_CONTEXT = 'claudeModelSwitch.deleteSelectionMode';
+
 export function registerCommands(
   context: vscode.ExtensionContext,
   store: ProfileStore,
@@ -23,6 +26,36 @@ export function registerCommands(
   const refreshAll = () => {
     treeProvider.refresh();
     statusBar.update();
+  };
+
+  const exitSelectionMode = async () => {
+    treeProvider.exitSelectionMode();
+    await vscode.commands.executeCommand('setContext', SPEED_SELECTION_CONTEXT, false);
+    await vscode.commands.executeCommand('setContext', DELETE_SELECTION_CONTEXT, false);
+  };
+
+  const enterSpeedSelectionMode = async () => {
+    treeProvider.enterSpeedSelectionMode();
+    await vscode.commands.executeCommand('setContext', SPEED_SELECTION_CONTEXT, true);
+    await vscode.commands.executeCommand('setContext', DELETE_SELECTION_CONTEXT, false);
+  };
+
+  const enterDeleteSelectionMode = async () => {
+    treeProvider.enterDeleteSelectionMode();
+    await vscode.commands.executeCommand('setContext', SPEED_SELECTION_CONTEXT, false);
+    await vscode.commands.executeCommand('setContext', DELETE_SELECTION_CONTEXT, true);
+  };
+
+  const clearWorkspaceModelSettings = async () => {
+    const confirm = await vscode.window.showWarningMessage(
+      l10n('clearWorkspaceModelSettingsConfirm'),
+      { modal: true },
+      l10n('clear'),
+    );
+    if (confirm === l10n('clear')) {
+      await writer.clearSettings();
+      refreshAll();
+    }
   };
 
   context.subscriptions.push(
@@ -115,12 +148,30 @@ export function registerCommands(
         return;
       }
 
-      const confirm = await vscode.window.showWarningMessage(
-        l10n('speedTestAllConfirm', profiles.length),
-        { modal: true },
-        l10n('startSpeedTest'),
-      );
-      if (confirm !== l10n('startSpeedTest')) return;
+      await enterSpeedSelectionMode();
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.toggleAllSpeedTestProfiles', () => {
+      treeProvider.toggleAllSpeedTestProfiles();
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.toggleSpeedTestProfile', (item?: { profile: Profile }) => {
+      if (!item?.profile) return;
+      treeProvider.toggleSpeedTestProfile(item.profile.id);
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.cancelSpeedTestSelection', async () => {
+      await exitSelectionMode();
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.startSelectedProfilesSpeedTest', async () => {
+      const selectedProfiles = treeProvider.getSpeedTestSelectedProfiles();
+      if (selectedProfiles.length === 0) {
+        vscode.window.showInformationMessage(l10n('noSpeedTestProfilesSelected'));
+        return;
+      }
+
+      await exitSelectionMode();
 
       const results = await vscode.window.withProgress(
         {
@@ -128,7 +179,7 @@ export function registerCommands(
           title: l10n('testingAllProfiles'),
           cancellable: false,
         },
-        (progress) => speedTester.testProfiles(profiles, (result, completed, total) => {
+        (progress) => speedTester.testProfiles(selectedProfiles, (result, completed, total) => {
           treeProvider.setSpeedResult(result.profile.id, {
             status: result.status,
             durationMs: result.durationMs,
@@ -146,17 +197,54 @@ export function registerCommands(
       vscode.window.showInformationMessage(l10n('speedTestComplete', successCount, results.length));
     }),
 
-    vscode.commands.registerCommand('claude-model-switch.clearSettings', async () => {
-      const confirm = await vscode.window.showWarningMessage(
-        l10n('clearSettingsConfirm'),
-        { modal: true },
-        l10n('clear'),
-      );
-      if (confirm === l10n('clear')) {
-        await writer.clearSettings();
-        refreshAll();
+    vscode.commands.registerCommand('claude-model-switch.deleteModelProfiles', async () => {
+      const profiles = store.getAll();
+      if (profiles.length === 0) {
+        vscode.window.showInformationMessage(l10n('noProfilesAvailable'));
+        return;
       }
+
+      await enterDeleteSelectionMode();
     }),
+
+    vscode.commands.registerCommand('claude-model-switch.toggleAllDeleteProfiles', () => {
+      treeProvider.toggleAllDeleteProfiles();
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.toggleDeleteProfileSelection', (item?: { profile: Profile }) => {
+      if (!item?.profile) return;
+      treeProvider.toggleDeleteProfile(item.profile.id);
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.cancelDeleteProfileSelection', async () => {
+      await exitSelectionMode();
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.startSelectedProfilesDelete', async () => {
+      const selectedProfiles = treeProvider.getDeleteSelectedProfiles();
+      if (selectedProfiles.length === 0) {
+        vscode.window.showInformationMessage(l10n('noDeleteProfilesSelected'));
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        l10n('deleteSelectedProfilesConfirm', selectedProfiles.length),
+        { modal: true },
+        l10n('delete'),
+      );
+      if (confirm !== l10n('delete')) return;
+
+      for (const profile of selectedProfiles) {
+        store.delete(profile.id);
+      }
+      await exitSelectionMode();
+      refreshAll();
+      vscode.window.showInformationMessage(l10n('deleteProfilesComplete', selectedProfiles.length));
+    }),
+
+    vscode.commands.registerCommand('claude-model-switch.clearWorkspaceModelSettings', clearWorkspaceModelSettings),
+
+    vscode.commands.registerCommand('claude-model-switch.clearSettings', clearWorkspaceModelSettings),
   );
 }
 
