@@ -7,8 +7,9 @@ dist/**
 *.vsix
 pnpm-lock.yaml
 tsconfig.json
-README.zh-CN.md
+README.en.md
 .gitignore
 .npmrc
 !docs/usage.png
 out/**/*.map
+CLAUDE.md

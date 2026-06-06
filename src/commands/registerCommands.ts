@@ -248,8 +248,17 @@ export function registerCommands(
   );
 }
 
+function getDisplayModel(profile: Profile): string {
+  return profile.model
+    || profile.env.ANTHROPIC_MODEL
+    || profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+    || profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+    || profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
+    || '';
+}
+
 function formatProfileLabel(profile: Profile): string {
-  const model = profile.env.ANTHROPIC_MODEL || profile.model;
+  const model = getDisplayModel(profile);
   return model ? `${profile.name} (${model})` : profile.name;
 }
 
@@ -264,7 +273,7 @@ async function pickProfile(store: ProfileStore, writer: SettingsWriter, title: s
   const selected = await vscode.window.showQuickPick(
     profiles.map(profile => ({
       label: profile.id === activeId ? `$(check) ${profile.name}` : profile.name,
-      description: profile.env.ANTHROPIC_MODEL || profile.model || '',
+      description: getDisplayModel(profile),
       profile,
     })),
     {

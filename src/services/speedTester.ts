@@ -31,6 +31,30 @@ interface ResolvedSpeedConfig {
 }
 
 export class SpeedTester {
+  async listModels(baseURL?: string, token?: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<string[]> {
+    const normalizedBaseURL = this.normalizeModelsBaseURL(baseURL);
+    if (!normalizedBaseURL) {
+      throw new Error(l10n('webviewBaseUrlRequired'));
+    }
+
+    const client = this.createClient(
+      {
+        token: this.trimString(token),
+        baseURL: normalizedBaseURL,
+      },
+      timeoutMs,
+    );
+
+    const ids: string[] = [];
+    for await (const model of client.models.list()) {
+      if (typeof model.id === 'string' && model.id.trim()) {
+        ids.push(model.id.trim());
+      }
+    }
+
+    return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+  }
+
   async testProfile(profile: Profile, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<SpeedTestResult> {
     const startedAt = Date.now();
     const config = this.resolveConfig(profile);
@@ -160,7 +184,12 @@ export class SpeedTester {
     return trimmed.replace(/\/+$/, '').replace(/\/v1$/, '');
   }
 
-  private formatError(error: unknown): string {
+  private normalizeModelsBaseURL(baseURL?: string): string | undefined {
+    const normalized = this.normalizeBaseURL(baseURL);
+    return normalized?.replace(/\/anthropic$/i, '');
+  }
+
+  public formatError(error: unknown): string {
     if (error instanceof Anthropic.AuthenticationError) {
       return l10n('speedAuthFailed');
     }

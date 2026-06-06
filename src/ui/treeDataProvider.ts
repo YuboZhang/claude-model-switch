@@ -239,11 +239,20 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
   }
 
   private buildDescription(profile: Profile, speedResult?: ProfileSpeedResult): string {
-    const parts = [profile.model ?? ''];
+    const parts = [this.getDisplayModel(profile)];
     if (speedResult) {
       parts.push(speedResult.status === 'success' ? `${speedResult.durationMs}ms` : l10n('treeSpeedFailed'));
     }
     return parts.filter(Boolean).join(' · ');
+  }
+
+  private getDisplayModel(profile: Profile): string {
+    return profile.model
+      || profile.env.ANTHROPIC_MODEL
+      || profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+      || profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+      || profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
+      || '';
   }
 
   private buildIcon(isActive: boolean, speedResult?: ProfileSpeedResult): vscode.ThemeIcon {
@@ -273,7 +282,8 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     lines.push(`**${profile.name}**`);
     if (isActive) lines.push(l10n('treeCurrentProfile'));
     lines.push('');
-    if (profile.model) lines.push(l10n('treeModel', profile.model));
+    const displayModel = this.getDisplayModel(profile);
+    if (displayModel) lines.push(l10n('treeModel', displayModel));
     if (profile.env.ANTHROPIC_BASE_URL) lines.push(l10n('treeBaseUrl', profile.env.ANTHROPIC_BASE_URL));
     if (profile.env.ANTHROPIC_AUTH_TOKEN) lines.push(l10n('treeAuthToken', maskToken(profile.env.ANTHROPIC_AUTH_TOKEN)));
     if (profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) lines.push(`Haiku: ${profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL}`);

@@ -1,60 +1,63 @@
 # Claude Model Switch
 
-[中文文档](README.zh-CN.md)
+[English](README.en.md)
 
-A VSCode extension for managing Claude Code model settings per project.
+一个用于按项目管理 Claude Code 模型配置的 VSCode 扩展。
 
-If you use Claude Code for VS Code in multiple projects at the same time and need different model settings for different projects, one project might use Claude while another uses GLM, Kimi, Qwen, or MiniMax through a compatible API.
+如果你在多个项目里同时使用 Claude Code for VS Code，不同项目需要不同的模型设置时，比如一个项目用 Claude，另一个项目通过兼容接口使用 GLM、Kimi、Qwen 或 MiniMax。
 
-This extension can save those settings and switch between models. It updates the project's `.claude/settings.local.json`, so each project can keep its own model, base URL, and token configuration.
+这个扩展可以把这些设置保存，并在各个模型之间切换。它会更新项目里的 `.claude/settings.local.json`，让每个项目分别保存自己的模型、Base URL 和 Token 配置。
 
-## Preview
+## 预览
 
-![Usage](docs/usage.png)
+![使用说明](docs/usage.png)
 
-## Features
+## 功能
 
-- **Model Profile Management**: Add, edit, and delete model profiles
-- **Per-Project Switching**: Each project can use a different model — switch instantly without affecting others
-- **Status Bar**: Shows the current active model in the bottom status bar
-- **Tree View Sidebar**: Lists all profiles with inline action buttons (switch, edit, delete)
-- **Export/Import**: Export profiles to JSON for backup or sharing; import with conflict resolution
-- **Auto-fill**: Profile name defaults to model value; empty fields are omitted from settings
+- **模型配置管理**：添加、编辑、删除模型配置
+- **按项目切换**：每个项目独立使用不同模型，切换不影响其他项目
+- **状态栏**：在底部状态栏显示当前生效的模型
+- **侧边栏树视图**：列出所有配置，每行带操作按钮（切换、编辑、删除）
+- **导出/导入**：导出配置为 JSON 文件用于备份或分享；导入时支持冲突处理
+- **模型列表与测速**：可从 Base URL 获取模型列表，模型字段支持下拉选择，并可对单个模型字段或配置进行测速
+- **自动填充**：配置名称默认取模型值；空字段会从 settings 中移除对应托管项
 
-## Usage
+## 使用方法
 
-### Switch Model
+### 切换模型
 
-- Click the model name in the **status bar** (bottom left)
-- Or use the ⚡ (zap) inline button on any profile in the sidebar tree view
-- Or run `Claude: Switch to Model Profile` from the command palette
+- 点击底部**状态栏**中的模型名称
+- 或在侧边栏树视图中点击某配置行的 ⚡ 切换按钮
+- 或在命令面板中运行 `Claude: Switch to Model Profile`
 
-### Add Profile
+### 添加配置
 
-- Click the ➕ button at the top of the sidebar tree view
-- Or run `Claude: Add Model Profile` from the command palette
-- Fill in the fields in the webview panel (all optional)
+- 点击侧边栏树视图顶部的 ➕ 按钮
+- 或在命令面板中运行 `Claude: Add Model Profile`
+- 在 Webview 面板中填写字段（所有字段均可空）
+- 填写 Base URL 后可点击“获取模型列表”（Base URL 不能为空），把可用模型加载到各模型字段右侧下拉框
+- 每个模型字段右侧都有“模型测速”按钮，可在保存配置前直接测试当前输入的模型、Base URL 和 Token 组合
 
-### Edit / Delete Profile
+### 编辑 / 删除配置
 
-- Use the inline ✏️ / 🗑️ buttons on each profile row in the sidebar
-- Or right-click a profile row for context menu options
+- 使用侧边栏每行的 ✏️ / 🗑️ 按钮
+- 或右键点击配置行使用上下文菜单
 
-### Export / Import
+### 导出 / 导入
 
-- Use the sidebar header buttons or command palette:
-  - `Claude: Export Model Profiles` — saves all profiles to a JSON file
-  - `Claude: Import Model Profiles` — loads profiles from a JSON file, prompts for conflict resolution
+- 使用侧边栏顶部按钮或命令面板：
+  - `Claude: Export Model Profiles` — 将所有配置保存为 JSON 文件
+  - `Claude: Import Model Profiles` — 从 JSON 文件加载配置，遇到同名会提示处理方式
 
-## Development
+## 开发
 
-### Prerequisites
+### 前置条件
 
 - Node.js 20+
 - pnpm
 - VSCode 1.85+
 
-### Setup
+### 安装
 
 ```bash
 git clone <repo-url>
@@ -62,112 +65,112 @@ cd claude-model-switch
 pnpm install
 ```
 
-### Build
+### 构建
 
 ```bash
 pnpm run build
 ```
 
-### Watch (for development)
+### 开发模式（自动重建）
 
 ```bash
 pnpm run watch
 ```
 
-### Debug in VSCode
+### VSCode 中调试
 
-1. Open this project in VSCode
-2. Press `F5` or use the **Run Extension** launch configuration
-3. This opens a new VSCode Extension Development Host window with the extension loaded
-4. Make changes in `src/`, the watch task auto-rebuilds
-5. Reload the Extension Development Host window (`Ctrl+R` / `Cmd+R`) to see changes
+1. 在 VSCode 中打开本项目
+2. 按 `F5` 或使用 **Run Extension** 启动配置
+3. 会打开一个新的 VSCode Extension Development Host 窗口，扩展已加载
+4. 修改 `src/` 中的代码，watch 任务会自动重建
+5. 在 Extension Development Host 窗口中按 `Ctrl+R` / `Cmd+R` 重新加载查看变化
 
-### Type Check
+### 类型检查
 
 ```bash
 pnpm run lint
 ```
 
-### Available Scripts
+### 可用脚本
 
-- `pnpm run build` — build the extension once into `out/extension.js`
-- `pnpm run build:prod` — build the production bundle used for packaging and publishing
-- `pnpm run watch` — rebuild automatically while developing
-- `pnpm run lint` — run TypeScript type checking
-- `pnpm run package:vsix` — package the extension as `dist/claude-model-switch.vsix` for local installation or manual distribution
-- `pnpm run release:patch` — bump patch version and publish to VSCode Marketplace
-- `pnpm run release:minor` — bump minor version and publish to VSCode Marketplace
-- `pnpm run release:major` — bump major version and publish to VSCode Marketplace
+- `pnpm run build` — 单次构建扩展，输出到 `out/extension.js`
+- `pnpm run build:prod` — 构建用于打包和发布的生产版本
+- `pnpm run watch` — 开发时自动监听并重建
+- `pnpm run lint` — 执行 TypeScript 类型检查
+- `pnpm run package:vsix` — 打包生成 `dist/claude-model-switch.vsix`，用于本地安装或手动分发
+- `pnpm run release:patch` — 自动升级补丁版本并发布到 VSCode Marketplace
+- `pnpm run release:minor` — 自动升级次版本并发布到 VSCode Marketplace
+- `pnpm run release:major` — 自动升级主版本并发布到 VSCode Marketplace
 
-## Publishing
+## 发布
 
-Required secrets:
+需要配置的 Secrets：
 
-- `VSCE_PAT` — required for publishing to VSCode Marketplace
-- `OVSX_PAT` — optional, used for publishing to Open VSX
+- `VSCE_PAT` — 发布到 VSCode Marketplace 必需
+- `OVSX_PAT` — 可选，用于发布到 Open VSX
 
-### Local packaging only
+### 仅本地打包
 
-Use this when you only want a `.vsix` file for testing or for sending to someone else directly.
+适用于你只想生成 `.vsix` 文件做测试，或者直接发给别人安装。
 
 ```bash
 pnpm run package:vsix
 ```
 
-This produces `dist/claude-model-switch.vsix`, which can be installed manually:
+会生成 `dist/claude-model-switch.vsix`，可手动安装：
 
 ```bash
 code --install-extension dist/claude-model-switch.vsix
 ```
 
-### Local Marketplace publishing
+### 本地直接发布 Marketplace
 
-Use this when you want to publish from your own machine and let `vsce` automatically bump the version in `package.json`.
+适用于你想在本机直接发布，并让 `vsce` 自动修改 `package.json` 里的版本号。
 
 ```bash
 pnpm run release:patch
 ```
 
-You can replace `patch` with `minor` or `major`.
+这里的 `patch` 也可以换成 `minor` 或 `major`。
 
-### GitHub Actions: tag-based publish
+### GitHub Actions：基于 tag 的发布
 
-Use this when the version is already decided and committed locally.
+适用于版本号已经在本地确定并提交完成的情况。
 
 ```bash
 git tag v0.0.1
 git push origin v0.0.1
 ```
 
-This workflow will:
+这个工作流会：
 
-1. install dependencies with pnpm
-2. build the extension
-3. package `dist/claude-model-switch.vsix`
-4. publish that exact package to VSCode Marketplace
-5. optionally publish the same package to Open VSX
+1. 用 pnpm 安装依赖
+2. 构建扩展
+3. 打包生成 `dist/claude-model-switch.vsix`
+4. 把这个确定的包发布到 VSCode Marketplace
+5. 可选地把同一个包发布到 Open VSX
 
-### GitHub Actions: manual release with automatic version bump
+### GitHub Actions：手动触发并自动升级版本发布
 
-Use the `Manual Marketplace Release` workflow in GitHub Actions when you want GitHub to perform the version bump and publish for you.
+如果你想让 GitHub 来自动升级版本并发布，可以使用 GitHub Actions 里的 `Manual Marketplace Release` 工作流。
 
-Workflow input:
+可选输入：
 
-- `patch` — bugfix release, e.g. `0.0.1 -> 0.0.2`
-- `minor` — backward-compatible feature release, e.g. `0.0.1 -> 0.1.0`
-- `major` — breaking release, e.g. `0.0.1 -> 1.0.0`
+- `patch` — 补丁版本，比如 `0.0.1 -> 0.0.2`
+- `minor` — 次版本，比如 `0.0.1 -> 0.1.0`
+- `major` — 主版本，比如 `0.0.1 -> 1.0.0`
 
-This workflow will:
+这个工作流会：
 
-1. run `vsce publish patch|minor|major`
-2. update `package.json`
-3. create the version tag
-4. push the commit and tags back to GitHub
+1. 执行 `vsce publish patch|minor|major`
+2. 更新 `package.json` 版本号
+3. 创建版本 tag
+4. 把提交和 tag 推回 GitHub
 
-## How It Works
+## 工作原理
 
-- **Profiles** are stored in VSCode's `globalState` (persists across sessions, machine-specific)
-- **Active profile ID** is recorded in `<workspace>/.claude/.claude-model-switch-active.json`
-- **Switching** merges only the `model` and `env` fields into `<workspace>/.claude/settings.local.json`, preserving other settings
-- If the active profile ID is not found, it falls back to full-field matching against the current `settings.local.json`
-- Status bar and tree view auto-refresh when switching editors or when `settings.local.json` changes
+- **配置列表**存储在 VSCode 的 `globalState` 中（跨会话持久化，机器特定）
+- **当前生效的配置 ID** 记录在 `<workspace>/.claude/.claude-model-switch-active.json` 中
+- **切换**时只管理 `settings.local.json` 的 `model` 和支持的 `env` 字段；配置中留空的托管字段会从 `settings.local.json` 移除，其他设置会保留
+- 如果配置 ID 找不到对应的 profile，会尝试全字段匹配当前的 `settings.local.json`
+- 切换编辑器或 `settings.local.json` 文件变化时，状态栏和树视图自动刷新

@@ -7,13 +7,13 @@
   <title>{{title}}</title>
   <link rel="stylesheet" nonce="{{nonce}}" href="{{cssUri}}">
 </head>
-<body data-unnamed="{{unnamed}}">
+<body data-unnamed="{{unnamed}}" data-fetch-loading="{{fetchModelsLoading}}" data-fetch-success="{{fetchModelsSuccess}}" data-fetch-failed="{{fetchModelsFailed}}" data-base-url-required="{{baseUrlRequired}}" data-select-placeholder="{{selectModelPlaceholder}}">
   <h2>{{heading}}</h2>
 
   <div class="section-title">{{environmentVariables}}</div>
 
   <div class="field">
-    <label for="ANTHROPIC_AUTH_TOKEN">Auth Token</label>
+    <label for="ANTHROPIC_AUTH_TOKEN">{{authToken}}</label>
     <div class="input-wrapper">
       <input type="password" id="ANTHROPIC_AUTH_TOKEN" value="{{ANTHROPIC_AUTH_TOKEN}}" />
       <button class="eye-toggle" id="toggleAuthToken" title="{{showHide}}">
@@ -24,33 +24,67 @@
   </div>
 
   <div class="field">
-    <label for="ANTHROPIC_BASE_URL">Base URL</label>
-    <input type="text" id="ANTHROPIC_BASE_URL" value="{{ANTHROPIC_BASE_URL}}" />
+    <label for="ANTHROPIC_BASE_URL">{{baseUrl}}</label>
+    <div class="input-row">
+      <input type="text" id="ANTHROPIC_BASE_URL" value="{{ANTHROPIC_BASE_URL}}" />
+      <button class="btn-secondary" id="fetchModelsBtn">{{fetchModels}}</button>
+    </div>
+    <div class="models-status" id="modelsStatus" aria-live="polite"></div>
   </div>
 
   <div class="field">
-    <label for="ANTHROPIC_DEFAULT_HAIKU_MODEL">Default Haiku Model</label>
-    <input type="text" id="ANTHROPIC_DEFAULT_HAIKU_MODEL" value="{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}" />
+    <label for="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{defaultHaikuModel}}</label>
+    <div class="model-field-row">
+      <input type="text" id="ANTHROPIC_DEFAULT_HAIKU_MODEL" value="{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}" />
+      <select class="model-select" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL" aria-label="{{selectModelPlaceholder}}">
+        <option value="">{{selectModelPlaceholder}}</option>
+      </select>
+      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{modelSpeedTest}}</button>
+    </div>
   </div>
 
   <div class="field">
-    <label for="ANTHROPIC_DEFAULT_OPUS_MODEL">Default Opus Model</label>
-    <input type="text" id="ANTHROPIC_DEFAULT_OPUS_MODEL" value="{{ANTHROPIC_DEFAULT_OPUS_MODEL}}" />
+    <label for="ANTHROPIC_DEFAULT_SONNET_MODEL">{{defaultSonnetModel}}</label>
+    <div class="model-field-row">
+      <input type="text" id="ANTHROPIC_DEFAULT_SONNET_MODEL" value="{{ANTHROPIC_DEFAULT_SONNET_MODEL}}" />
+      <select class="model-select" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL" aria-label="{{selectModelPlaceholder}}">
+        <option value="">{{selectModelPlaceholder}}</option>
+      </select>
+      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">{{modelSpeedTest}}</button>
+    </div>
   </div>
 
   <div class="field">
-    <label for="ANTHROPIC_DEFAULT_SONNET_MODEL">Default Sonnet Model</label>
-    <input type="text" id="ANTHROPIC_DEFAULT_SONNET_MODEL" value="{{ANTHROPIC_DEFAULT_SONNET_MODEL}}" />
+    <label for="ANTHROPIC_DEFAULT_OPUS_MODEL">{{defaultOpusModel}}</label>
+    <div class="model-field-row">
+      <input type="text" id="ANTHROPIC_DEFAULT_OPUS_MODEL" value="{{ANTHROPIC_DEFAULT_OPUS_MODEL}}" />
+      <select class="model-select" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL" aria-label="{{selectModelPlaceholder}}">
+        <option value="">{{selectModelPlaceholder}}</option>
+      </select>
+      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">{{modelSpeedTest}}</button>
+    </div>
   </div>
 
   <div class="field">
-    <label for="ANTHROPIC_MODEL">Anthropic Model</label>
-    <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
+    <label for="ANTHROPIC_MODEL">{{fallbackModel}}</label>
+    <div class="model-field-row">
+      <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
+      <select class="model-select" data-target="ANTHROPIC_MODEL" aria-label="{{selectModelPlaceholder}}">
+        <option value="">{{selectModelPlaceholder}}</option>
+      </select>
+      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_MODEL">{{modelSpeedTest}}</button>
+    </div>
   </div>
 
   <div class="field">
-    <label for="model">Model</label>
-    <input type="text" id="model" value="{{model}}" />
+    <label for="model">{{selectedModel}}</label>
+    <div class="model-field-row">
+      <input type="text" id="model" value="{{model}}" />
+      <select class="model-select" data-target="model" aria-label="{{selectModelPlaceholder}}">
+        <option value="">{{selectModelPlaceholder}}</option>
+      </select>
+      <button type="button" class="btn-secondary model-speed-test-btn" data-target="model">{{modelSpeedTest}}</button>
+    </div>
   </div>
 
   <div class="field">

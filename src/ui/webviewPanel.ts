@@ -4,6 +4,7 @@ import * as path from 'path';
 import { isChinese, l10n } from '../i18n';
 import { Profile, generateId } from '../models/profile';
 import { ProfileStore } from '../storage/profileStore';
+import { SpeedTester } from '../services/speedTester';
 
 type WebviewMode = 'create' | 'edit' | 'copy';
 
@@ -16,6 +17,7 @@ export class WebviewPanel {
   public static currentPanel: WebviewPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
+  private readonly speedTester = new SpeedTester();
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -47,6 +49,70 @@ export class WebviewPanel {
           }
           case 'cancel': {
             this.panel.dispose();
+            break;
+          }
+          case 'fetchModels': {
+            const baseURL = typeof msg.baseURL === 'string' ? msg.baseURL.trim() : '';
+            if (!baseURL) {
+              await this.panel.webview.postMessage({
+                type: 'modelsFetchFailed',
+                error: l10n('webviewBaseUrlRequired'),
+              });
+              break;
+            }
+
+            try {
+              const models = await this.speedTester.listModels(baseURL, msg.token);
+              await this.panel.webview.postMessage({ type: 'modelsFetched', models });
+            } catch (error) {
+              await this.panel.webview.postMessage({
+                type: 'modelsFetchFailed',
+                error: this.speedTester.formatError(error),
+              });
+            }
+            break;
+          }
+          case 'testModelSpeed': {
+            const requestId = typeof msg.requestId === 'string' ? msg.requestId : '';
+            const target = typeof msg.target === 'string' ? msg.target : '';
+            const model = typeof msg.model === 'string' ? msg.model.trim() : '';
+            const authToken = typeof msg.authToken === 'string' ? msg.authToken : '';
+            const baseURL = typeof msg.baseURL === 'string' ? msg.baseURL : '';
+
+            if (!model) {
+              await this.panel.webview.postMessage({
+                type: 'modelSpeedTestResult',
+                requestId,
+                target,
+                status: 'error',
+                durationMs: 0,
+                requestedModel: model,
+                error: l10n('speedMissingModel'),
+              });
+              break;
+            }
+
+            const profile: Profile = {
+              id: `webview-${target || 'model-speed-test'}`,
+              name: model,
+              model,
+              env: {
+                ANTHROPIC_AUTH_TOKEN: authToken,
+                ANTHROPIC_BASE_URL: baseURL,
+                ANTHROPIC_MODEL: model,
+              },
+            };
+            const result = await this.speedTester.testProfile(profile);
+            await this.panel.webview.postMessage({
+              type: 'modelSpeedTestResult',
+              requestId,
+              target,
+              status: result.status,
+              durationMs: result.durationMs,
+              requestedModel: model,
+              model: result.model,
+              error: result.error,
+            });
             break;
           }
         }
@@ -117,6 +183,20 @@ export class WebviewPanel {
     html = html.replace('{{save}}', l10n('webviewSave'));
     html = html.replace('{{cancel}}', l10n('webviewCancel'));
     html = html.replace('{{showHide}}', l10n('webviewShowHide'));
+    html = html.replace('{{authToken}}', l10n('webviewAuthToken'));
+    html = html.replace('{{baseUrl}}', l10n('webviewBaseUrl'));
+    html = html.replace('{{fetchModels}}', l10n('webviewFetchModels'));
+    html = html.replace(/\{\{modelSpeedTest\}\}/g, l10n('modelSpeedTest'));
+    html = html.replace('{{fetchModelsLoading}}', escapeAttr(l10n('webviewFetchModelsLoading')));
+    html = html.replace('{{fetchModelsSuccess}}', escapeAttr(l10n('webviewFetchModelsSuccess', '{0}')));
+    html = html.replace('{{fetchModelsFailed}}', escapeAttr(l10n('webviewFetchModelsFailed', '{0}')));
+    html = html.replace('{{baseUrlRequired}}', escapeAttr(l10n('webviewBaseUrlRequired')));
+    html = html.replace(/\{\{selectModelPlaceholder\}\}/g, escapeAttr(l10n('webviewSelectModelPlaceholder')));
+    html = html.replace('{{defaultHaikuModel}}', l10n('webviewDefaultHaikuModel'));
+    html = html.replace('{{defaultSonnetModel}}', l10n('webviewDefaultSonnetModel'));
+    html = html.replace('{{defaultOpusModel}}', l10n('webviewDefaultOpusModel'));
+    html = html.replace('{{fallbackModel}}', l10n('webviewFallbackModel'));
+    html = html.replace('{{selectedModel}}', l10n('webviewSelectedModel'));
     html = html.replace('{{unnamed}}', escapeAttr(l10n('webviewUnnamed')));
     html = html.replace('{{name}}', escapeAttr(profile?.name ?? ''));
     html = html.replace('{{model}}', escapeAttr(profile?.model ?? ''));

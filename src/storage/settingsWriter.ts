@@ -60,6 +60,8 @@ export class SettingsWriter {
 
     if (profile.model) {
       settings['model'] = profile.model;
+    } else {
+      delete settings['model'];
     }
 
     const env = (settings['env'] as Record<string, string>) ?? {};
