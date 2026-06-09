@@ -129,11 +129,13 @@ export class SpeedTester {
       || undefined;
 
     return {
-      model: this.trimString(profile.env.ANTHROPIC_MODEL)
-        || this.trimString(profile.model)
-        || this.trimString(userEnv?.ANTHROPIC_MODEL)
-        || this.trimString(userSettings?.model)
+      model: this.stripOneMillionContextSuffix(
+        this.trimString(profile.env.ANTHROPIC_MODEL)
+        || this.trimString(profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL)
+        || this.trimString(profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL)
+        || this.trimString(profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL)
         || undefined,
+      ),
       token,
       baseURL: this.trimString(profile.env.ANTHROPIC_BASE_URL)
         || this.trimString(userEnv?.ANTHROPIC_BASE_URL)
@@ -176,6 +178,11 @@ export class SpeedTester {
     if (typeof value !== 'string') return undefined;
     const trimmed = value.trim();
     return trimmed || undefined;
+  }
+
+  private stripOneMillionContextSuffix(value?: string): string | undefined {
+    if (!value) return undefined;
+    return value.endsWith('[1m]') ? value.slice(0, -4).trim() : value;
   }
 
   private normalizeBaseURL(baseURL?: string): string | undefined {

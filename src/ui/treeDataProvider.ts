@@ -247,8 +247,7 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
   }
 
   private getDisplayModel(profile: Profile): string {
-    return profile.model
-      || profile.env.ANTHROPIC_MODEL
+    return profile.env.ANTHROPIC_MODEL
       || profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL
       || profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL
       || profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
@@ -282,13 +281,12 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     lines.push(`**${profile.name}**`);
     if (isActive) lines.push(l10n('treeCurrentProfile'));
     lines.push('');
-    const displayModel = this.getDisplayModel(profile);
-    if (displayModel) lines.push(l10n('treeModel', displayModel));
     if (profile.env.ANTHROPIC_BASE_URL) lines.push(l10n('treeBaseUrl', profile.env.ANTHROPIC_BASE_URL));
     if (profile.env.ANTHROPIC_AUTH_TOKEN) lines.push(l10n('treeAuthToken', maskToken(profile.env.ANTHROPIC_AUTH_TOKEN)));
     if (profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) lines.push(`Haiku: ${profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL}`);
-    if (profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL) lines.push(`Opus: ${profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL}`);
     if (profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL) lines.push(`Sonnet: ${profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL}`);
+    if (profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL) lines.push(`Opus: ${profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL}`);
+    if (profile.env.ANTHROPIC_MODEL) lines.push(`Anthropic: ${profile.env.ANTHROPIC_MODEL}`);
     if (speedResult) {
       lines.push('');
       if (speedResult.status === 'success') {

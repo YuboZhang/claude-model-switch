@@ -62,6 +62,9 @@ h2 { margin-bottom: 20px; }
   gap: 8px;
   align-items: center;
 }
+.model-field-row {
+  position: relative;
+}
 .input-row input,
 .model-field-row input {
   flex: 1;
@@ -95,6 +98,21 @@ h2 { margin-bottom: 20px; }
 }
 .model-speed-test-btn:disabled {
   cursor: wait;
+}
+.field .one-million-context-toggle {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  white-space: nowrap;
+}
+.field .one-million-context-toggle input {
+  width: auto;
+  margin: 0;
 }
 .models-status {
   min-height: 16px;

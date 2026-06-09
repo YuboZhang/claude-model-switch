@@ -4,6 +4,25 @@ const modelSpeedTestBtns = Array.from(document.querySelectorAll('.model-speed-te
 const modelsStatus = document.getElementById('modelsStatus');
 const fetchModelsBtn = document.getElementById('fetchModelsBtn');
 const pendingModelSpeedTests = new Map();
+const modelNameSourceIds = [
+  'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+  'ANTHROPIC_DEFAULT_SONNET_MODEL',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_MODEL',
+];
+const oneMillionContextTargets = [
+  'ANTHROPIC_DEFAULT_SONNET_MODEL',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_MODEL',
+];
+
+for (const targetId of oneMillionContextTargets) {
+  const input = document.getElementById(targetId);
+  const checkbox = document.getElementById(`${targetId}_ONE_MILLION_CONTEXT`);
+  const parsed = parseOneMillionContextModel(input?.value || '');
+  if (input) input.value = parsed.model;
+  if (checkbox) checkbox.checked = checkbox.checked || parsed.supportsOneMillionContext;
+}
 
 // Toggle token visibility with eye icon inside input
 document.getElementById('toggleAuthToken').addEventListener('click', function() {
@@ -19,23 +38,21 @@ document.getElementById('toggleAuthToken').addEventListener('click', function() 
 
 // Save
 document.getElementById('saveBtn').addEventListener('click', function() {
-  const model = document.getElementById('model').value;
   let name = document.getElementById('name').value.trim();
   if (!name) {
-    name = model || document.body.dataset.unnamed || 'Unnamed';
+    name = getFirstModelValue() || document.body.dataset.unnamed || 'Unnamed';
   }
 
   const profile = {
     id: '',
     name: name,
-    model: model,
     env: {
       ANTHROPIC_AUTH_TOKEN: document.getElementById('ANTHROPIC_AUTH_TOKEN').value,
       ANTHROPIC_BASE_URL: document.getElementById('ANTHROPIC_BASE_URL').value,
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: document.getElementById('ANTHROPIC_DEFAULT_HAIKU_MODEL').value,
-      ANTHROPIC_DEFAULT_OPUS_MODEL: document.getElementById('ANTHROPIC_DEFAULT_OPUS_MODEL').value,
-      ANTHROPIC_DEFAULT_SONNET_MODEL: document.getElementById('ANTHROPIC_DEFAULT_SONNET_MODEL').value,
-      ANTHROPIC_MODEL: document.getElementById('ANTHROPIC_MODEL').value,
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: getModelValue('ANTHROPIC_DEFAULT_HAIKU_MODEL'),
+      ANTHROPIC_DEFAULT_SONNET_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_SONNET_MODEL'),
+      ANTHROPIC_DEFAULT_OPUS_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_OPUS_MODEL'),
+      ANTHROPIC_MODEL: getModelValueForSave('ANTHROPIC_MODEL'),
     }
   };
 
@@ -107,7 +124,7 @@ for (const button of modelSpeedTestBtns) {
   button.addEventListener('click', function() {
     const targetId = this.dataset.target;
     const modelInput = document.getElementById(targetId);
-    const model = modelInput?.value.trim() || '';
+    const model = getModelValueFromInput(modelInput);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     pendingModelSpeedTests.set(requestId, { button: this, model });
     this.disabled = true;
@@ -135,19 +152,59 @@ for (const select of modelSelects) {
   });
 }
 
-// Auto-fill name from model if name is empty
-document.getElementById('model').addEventListener('input', function() {
-  const nameInput = document.getElementById('name');
-  if (!nameInput.value.trim()) {
-    nameInput.value = this.value;
+// Auto-fill name from the first configured model if name is empty
+for (const inputId of modelNameSourceIds) {
+  document.getElementById(inputId).addEventListener('input', function() {
+    const nameInput = document.getElementById('name');
+    if (!nameInput.value.trim()) {
+      nameInput.value = getFirstModelValue();
+    }
+  });
+}
+
+function getModelValue(id) {
+  return getModelValueFromInput(document.getElementById(id));
+}
+
+function getModelValueForSave(id) {
+  const checkbox = document.getElementById(`${id}_ONE_MILLION_CONTEXT`);
+  return formatOneMillionContextModel(getModelValue(id), checkbox?.checked);
+}
+
+function getModelValueFromInput(input) {
+  return parseOneMillionContextModel(input?.value || '').model.trim();
+}
+
+function getFirstModelValue() {
+  for (const inputId of modelNameSourceIds) {
+    const value = getModelValue(inputId);
+    if (value) return value;
   }
-});
+  return '';
+}
+
+function parseOneMillionContextModel(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed.endsWith('[1m]')) {
+    return { model: trimmed, supportsOneMillionContext: false };
+  }
+  return {
+    model: trimmed.slice(0, -4).trim(),
+    supportsOneMillionContext: true,
+  };
+}
+
+function formatOneMillionContextModel(value, supportsOneMillionContext) {
+  const model = parseOneMillionContextModel(value).model;
+  if (!model) return '';
+  return supportsOneMillionContext ? `${model}[1m]` : model;
+}
 
 function populateModelSelects(models) {
   const placeholder = document.body.dataset.selectPlaceholder || 'Select model';
   for (const select of modelSelects) {
     const target = document.getElementById(select.dataset.target);
-    const currentValue = target?.value || '';
+    const currentValue = getModelValueFromInput(target);
     select.replaceChildren(createOption('', placeholder));
 
     for (const model of models) {

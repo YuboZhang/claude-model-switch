@@ -12,9 +12,18 @@ const ENV_KEYS: (keyof ProfileEnv)[] = [
   'ANTHROPIC_AUTH_TOKEN',
   'ANTHROPIC_BASE_URL',
   'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME',
   'ANTHROPIC_DEFAULT_SONNET_MODEL',
+  'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
   'ANTHROPIC_MODEL',
+];
+
+const DEFAULT_MODEL_NAME_PAIRS: Array<[keyof ProfileEnv, keyof ProfileEnv]> = [
+  ['ANTHROPIC_DEFAULT_HAIKU_MODEL', 'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME'],
+  ['ANTHROPIC_DEFAULT_SONNET_MODEL', 'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME'],
+  ['ANTHROPIC_DEFAULT_OPUS_MODEL', 'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME'],
 ];
 
 export class SettingsWriter {
@@ -58,16 +67,24 @@ export class SettingsWriter {
       }
     }
 
-    if (profile.model) {
-      settings['model'] = profile.model;
-    } else {
-      delete settings['model'];
+    delete settings['model'];
+
+    const profileEnv: ProfileEnv = { ...profile.env };
+    for (const [modelKey, nameKey] of DEFAULT_MODEL_NAME_PAIRS) {
+      const value = profileEnv[modelKey];
+      if (value !== undefined && value !== '') {
+        profileEnv[nameKey] = value;
+      } else {
+        delete profileEnv[nameKey];
+      }
     }
 
-    const env = (settings['env'] as Record<string, string>) ?? {};
+    const env = settings['env'] && typeof settings['env'] === 'object'
+      ? settings['env'] as Record<string, string>
+      : {};
     for (const key of ENV_KEYS) {
-      if (profile.env[key] !== undefined && profile.env[key] !== '') {
-        env[key] = profile.env[key]!;
+      if (profileEnv[key] !== undefined && profileEnv[key] !== '') {
+        env[key] = profileEnv[key]!;
       } else {
         delete env[key];
       }
@@ -100,11 +117,24 @@ export class SettingsWriter {
     if (!fs.existsSync(settingsPath)) return undefined;
 
     try {
-      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-      return (settings as Record<string, unknown>)['model'] as string;
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')) as Record<string, unknown>;
+      const env = settings['env'] && typeof settings['env'] === 'object'
+        ? settings['env'] as Record<string, unknown>
+        : undefined;
+      return this.trimString(env?.ANTHROPIC_MODEL)
+        || this.trimString(env?.ANTHROPIC_DEFAULT_OPUS_MODEL)
+        || this.trimString(env?.ANTHROPIC_DEFAULT_SONNET_MODEL)
+        || this.trimString(env?.ANTHROPIC_DEFAULT_HAIKU_MODEL)
+        || this.trimString(settings['model']);
     } catch {
       return undefined;
     }
+  }
+
+  private trimString(value: unknown): string | undefined {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed || undefined;
   }
 
   async clearSettings(): Promise<void> {

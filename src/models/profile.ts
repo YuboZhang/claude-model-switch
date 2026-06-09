@@ -2,24 +2,25 @@ export interface ProfileEnv {
   ANTHROPIC_AUTH_TOKEN?: string;
   ANTHROPIC_BASE_URL?: string;
   ANTHROPIC_DEFAULT_HAIKU_MODEL?: string;
-  ANTHROPIC_DEFAULT_OPUS_MODEL?: string;
+  ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME?: string;
   ANTHROPIC_DEFAULT_SONNET_MODEL?: string;
+  ANTHROPIC_DEFAULT_SONNET_MODEL_NAME?: string;
+  ANTHROPIC_DEFAULT_OPUS_MODEL?: string;
+  ANTHROPIC_DEFAULT_OPUS_MODEL_NAME?: string;
   ANTHROPIC_MODEL?: string;
 }
 
 export interface Profile {
   id: string;
   name: string;
-  model?: string;
   env: ProfileEnv;
 }
 
-export function createDefaultProfile(model?: string): Profile {
+export function createDefaultProfile(): Profile {
   const id = generateId();
   return {
     id,
-    name: model ?? '',
-    model: model ?? '',
+    name: '',
     env: {},
   };
 }

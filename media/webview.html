@@ -51,6 +51,7 @@
         <option value="">{{selectModelPlaceholder}}</option>
       </select>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">{{modelSpeedTest}}</button>
+      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
   </div>
 
@@ -62,6 +63,7 @@
         <option value="">{{selectModelPlaceholder}}</option>
       </select>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">{{modelSpeedTest}}</button>
+      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
   </div>
 
@@ -73,17 +75,7 @@
         <option value="">{{selectModelPlaceholder}}</option>
       </select>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_MODEL">{{modelSpeedTest}}</button>
-    </div>
-  </div>
-
-  <div class="field">
-    <label for="model">{{selectedModel}}</label>
-    <div class="model-field-row">
-      <input type="text" id="model" value="{{model}}" />
-      <select class="model-select" data-target="model" aria-label="{{selectModelPlaceholder}}">
-        <option value="">{{selectModelPlaceholder}}</option>
-      </select>
-      <button type="button" class="btn-secondary model-speed-test-btn" data-target="model">{{modelSpeedTest}}</button>
+      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
   </div>
 

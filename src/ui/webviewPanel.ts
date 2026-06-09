@@ -95,7 +95,6 @@ export class WebviewPanel {
             const profile: Profile = {
               id: `webview-${target || 'model-speed-test'}`,
               name: model,
-              model,
               env: {
                 ANTHROPIC_AUTH_TOKEN: authToken,
                 ANTHROPIC_BASE_URL: baseURL,
@@ -162,6 +161,9 @@ export class WebviewPanel {
     const nonce = getNonce();
     const profile = this.options.profile;
     const isEdit = this.options.mode === 'edit';
+    const sonnetModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_DEFAULT_SONNET_MODEL ?? '');
+    const opusModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_DEFAULT_OPUS_MODEL ?? '');
+    const fallbackModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_MODEL ?? '');
 
     const mediaDir = path.join(extensionUri.fsPath, 'media');
     const htmlTemplate = fs.readFileSync(path.join(mediaDir, 'webview.html'), 'utf-8');
@@ -196,16 +198,18 @@ export class WebviewPanel {
     html = html.replace('{{defaultSonnetModel}}', l10n('webviewDefaultSonnetModel'));
     html = html.replace('{{defaultOpusModel}}', l10n('webviewDefaultOpusModel'));
     html = html.replace('{{fallbackModel}}', l10n('webviewFallbackModel'));
-    html = html.replace('{{selectedModel}}', l10n('webviewSelectedModel'));
+    html = html.replace(/\{\{oneMillionContext\}\}/g, l10n('webviewOneMillionContext'));
     html = html.replace('{{unnamed}}', escapeAttr(l10n('webviewUnnamed')));
     html = html.replace('{{name}}', escapeAttr(profile?.name ?? ''));
-    html = html.replace('{{model}}', escapeAttr(profile?.model ?? ''));
     html = html.replace('{{ANTHROPIC_AUTH_TOKEN}}', escapeAttr(profile?.env?.ANTHROPIC_AUTH_TOKEN ?? ''));
     html = html.replace('{{ANTHROPIC_BASE_URL}}', escapeAttr(profile?.env?.ANTHROPIC_BASE_URL ?? ''));
     html = html.replace('{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}', escapeAttr(profile?.env?.ANTHROPIC_DEFAULT_HAIKU_MODEL ?? ''));
-    html = html.replace('{{ANTHROPIC_DEFAULT_OPUS_MODEL}}', escapeAttr(profile?.env?.ANTHROPIC_DEFAULT_OPUS_MODEL ?? ''));
-    html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL}}', escapeAttr(profile?.env?.ANTHROPIC_DEFAULT_SONNET_MODEL ?? ''));
-    html = html.replace('{{ANTHROPIC_MODEL}}', escapeAttr(profile?.env?.ANTHROPIC_MODEL ?? ''));
+    html = html.replace('{{ANTHROPIC_DEFAULT_OPUS_MODEL}}', escapeAttr(opusModel.model));
+    html = html.replace('{{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', opusModel.supportsOneMillionContext ? 'checked' : '');
+    html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL}}', escapeAttr(sonnetModel.model));
+    html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', sonnetModel.supportsOneMillionContext ? 'checked' : '');
+    html = html.replace('{{ANTHROPIC_MODEL}}', escapeAttr(fallbackModel.model));
+    html = html.replace('{{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', fallbackModel.supportsOneMillionContext ? 'checked' : '');
 
     return html;
   }
@@ -227,4 +231,15 @@ function escapeAttr(str: string): string {
     .replace(/'/g, '&apos;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function parseOneMillionContextModel(value: string): { model: string; supportsOneMillionContext: boolean } {
+  const trimmed = value.trim();
+  if (!trimmed.endsWith('[1m]')) {
+    return { model: trimmed, supportsOneMillionContext: false };
+  }
+  return {
+    model: trimmed.slice(0, -4).trim(),
+    supportsOneMillionContext: true,
+  };
 }
