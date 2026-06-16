@@ -30,6 +30,8 @@ This extension can save those settings and switch between models. It updates the
 - Or use the ⚡ (zap) inline button on any profile in the sidebar tree view
 - Or run `Claude: Switch to Model Profile` from the command palette
 
+> **Note**: After switching models, you need to restart Claude Code for the changes to take effect. The extension will show a "Restart VS Code" button that you can click to automatically reload the window.
+
 ### Add Profile
 
 - Click the ➕ button at the top of the sidebar tree view

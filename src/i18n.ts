@@ -87,6 +87,8 @@ const en = {
   speedModelOrEndpointNotFound: 'Model or endpoint not found',
   speedRateLimited: 'Rate limited',
   speedApiError: 'API error{0}: {1}',
+  modelSwitchSuccess: 'Switched to profile "{0}". Restart Claude Code to apply changes.',
+  restartClaudeCode: 'Restart VS Code',
 } as const;
 
 const zh: Record<keyof typeof en, string> = {
@@ -176,6 +178,8 @@ const zh: Record<keyof typeof en, string> = {
   speedModelOrEndpointNotFound: '模型或接口不存在',
   speedRateLimited: '请求频率受限',
   speedApiError: 'API 错误{0}: {1}',
+  modelSwitchSuccess: '已切换到配置"{0}"。需要重启 Claude Code 才能使更改生效。',
+  restartClaudeCode: '重启 VS Code',
 };
 
 export type MessageKey = keyof typeof en;

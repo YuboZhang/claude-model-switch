@@ -99,6 +99,17 @@ export class SettingsWriter {
     settings['env'] = env;
 
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+
+    // Notify user that Claude Code CLI needs to be restarted
+    vscode.window.showInformationMessage(
+      l10n('modelSwitchSuccess', profile.name),
+      l10n('restartClaudeCode'),
+    ).then(selection => {
+      if (selection === l10n('restartClaudeCode')) {
+        // Attempt to reload VS Code window to refresh Claude Code extension
+        vscode.commands.executeCommand('workbench.action.reloadWindow');
+      }
+    });
   }
 
   getActiveProfileId(): string | undefined {
