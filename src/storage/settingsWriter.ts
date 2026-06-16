@@ -69,6 +69,13 @@ export class SettingsWriter {
 
     delete settings['model'];
 
+    // Write effort (top-level key alongside model)
+    if (profile.effort) {
+      settings['effort'] = profile.effort;
+    } else {
+      delete settings['effort'];
+    }
+
     const profileEnv: ProfileEnv = { ...profile.env };
     for (const [modelKey, nameKey] of DEFAULT_MODEL_NAME_PAIRS) {
       const value = profileEnv[modelKey];
@@ -162,6 +169,7 @@ export class SettingsWriter {
     try {
       const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')) as Record<string, unknown>;
       delete settings['model'];
+      delete settings['effort'];
       if (settings['env'] && typeof settings['env'] === 'object') {
         const env = settings['env'] as Record<string, string>;
         for (const key of ENV_KEYS) {

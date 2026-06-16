@@ -46,6 +46,7 @@ document.getElementById('saveBtn').addEventListener('click', function() {
   const profile = {
     id: '',
     name: name,
+    effort: document.getElementById('effort').value,
     env: {
       ANTHROPIC_AUTH_TOKEN: document.getElementById('ANTHROPIC_AUTH_TOKEN').value,
       ANTHROPIC_BASE_URL: document.getElementById('ANTHROPIC_BASE_URL').value,

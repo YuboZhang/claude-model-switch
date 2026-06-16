@@ -10,10 +10,13 @@ export interface ProfileEnv {
   ANTHROPIC_MODEL?: string;
 }
 
+export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
 export interface Profile {
   id: string;
   name: string;
   env: ProfileEnv;
+  effort?: Effort;
 }
 
 export function createDefaultProfile(): Profile {
@@ -22,6 +25,7 @@ export function createDefaultProfile(): Profile {
     id,
     name: '',
     env: {},
+    effort: 'high',
   };
 }
 

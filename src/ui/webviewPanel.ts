@@ -211,6 +211,15 @@ export class WebviewPanel {
     html = html.replace('{{ANTHROPIC_MODEL}}', escapeAttr(fallbackModel.model));
     html = html.replace('{{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', fallbackModel.supportsOneMillionContext ? 'checked' : '');
 
+    // Effort dropdown
+    html = html.replace('{{effortLabel}}', l10n('webviewEffort'));
+    const currentEffort = profile?.effort || 'high';
+    html = html.replace('{{EFFORT_LOW_SELECTED}}', currentEffort === 'low' ? 'selected' : '');
+    html = html.replace('{{EFFORT_MEDIUM_SELECTED}}', currentEffort === 'medium' ? 'selected' : '');
+    html = html.replace('{{EFFORT_HIGH_SELECTED}}', currentEffort === 'high' ? 'selected' : '');
+    html = html.replace('{{EFFORT_XHIGH_SELECTED}}', currentEffort === 'xhigh' ? 'selected' : '');
+    html = html.replace('{{EFFORT_MAX_SELECTED}}', currentEffort === 'max' ? 'selected' : '');
+
     return html;
   }
 }

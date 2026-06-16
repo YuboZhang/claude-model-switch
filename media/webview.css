@@ -50,6 +50,9 @@ h2 { margin-bottom: 20px; }
   font-family: inherit;
   box-sizing: border-box;
 }
+.effort-select {
+  max-width: 200px;
+}
 .field-hint {
   font-size: 11px;
   color: var(--label-fg);

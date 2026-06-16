@@ -80,6 +80,17 @@
   </div>
 
   <div class="field">
+    <label for="effort">{{effortLabel}}</label>
+    <select id="effort" class="effort-select">
+      <option value="low" {{EFFORT_LOW_SELECTED}}>low</option>
+      <option value="medium" {{EFFORT_MEDIUM_SELECTED}}>medium</option>
+      <option value="high" {{EFFORT_HIGH_SELECTED}}>high</option>
+      <option value="xhigh" {{EFFORT_XHIGH_SELECTED}}>xhigh</option>
+      <option value="max" {{EFFORT_MAX_SELECTED}}>max</option>
+    </select>
+  </div>
+
+  <div class="field">
     <label for="name">{{profileName}}</label>
     <input type="text" id="name" value="{{name}}" />
     <div class="field-hint">{{nameHint}}</div>
