@@ -3,6 +3,9 @@ import * as vscode from 'vscode';
 const en = {
   noProfilesToExport: 'No profiles to export',
   exportProfilesTitle: 'Export Model Profiles',
+  exportTokensWarning: 'Auth Tokens are sensitive credentials. Include them in the exported file?',
+  exportWithTokens: 'Export with tokens',
+  exportWithoutTokens: 'Export without tokens',
   profilesExportedTo: 'Profiles exported to {0}',
   importProfilesTitle: 'Import Model Profiles',
   profileConflict: 'Profile "{0}" already exists. What would you like to do?',
@@ -88,6 +91,9 @@ const en = {
 const zh: Record<keyof typeof en, string> = {
   noProfilesToExport: '没有可导出的配置',
   exportProfilesTitle: '导出模型配置',
+  exportTokensWarning: '认证令牌属于敏感凭据。是否在导出文件中包含令牌？',
+  exportWithTokens: '包含令牌导出',
+  exportWithoutTokens: '不包含令牌导出',
   profilesExportedTo: '配置已导出到 {0}',
   importProfilesTitle: '导入模型配置',
   profileConflict: '配置“{0}”已存在，要怎么处理？',

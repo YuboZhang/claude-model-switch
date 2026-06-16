@@ -39,8 +39,16 @@ export class ProfileStore {
     this.context.globalState.update(STORAGE_KEY, profiles);
   }
 
-  exportAll(): string {
-    return JSON.stringify(this.getAll(), null, 2);
+  exportAll(includeTokens = false): string {
+    const profiles = this.getAll();
+    if (includeTokens) {
+      return JSON.stringify(profiles, null, 2);
+    }
+    const sanitized = profiles.map(p => ({
+      ...p,
+      env: { ...p.env, ANTHROPIC_AUTH_TOKEN: undefined },
+    }));
+    return JSON.stringify(sanitized, null, 2);
   }
 
   async importFromJSON(jsonStr: string, conflictHandler: (name: string) => Promise<'overwrite' | 'skip'>): Promise<{ imported: number; skipped: number }> {

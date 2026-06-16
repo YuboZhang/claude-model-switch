@@ -4,7 +4,27 @@ import { l10n } from '../i18n';
 import { ProfileStore } from '../storage/profileStore';
 
 export async function exportProfiles(store: ProfileStore): Promise<void> {
-  const content = store.exportAll();
+  const profiles = store.getAll();
+  if (profiles.length === 0) {
+    vscode.window.showInformationMessage(l10n('noProfilesToExport'));
+    return;
+  }
+
+  const hasTokens = profiles.some(p => p.env.ANTHROPIC_AUTH_TOKEN);
+  let includeTokens = false;
+
+  if (hasTokens) {
+    const choice = await vscode.window.showWarningMessage(
+      l10n('exportTokensWarning'),
+      { modal: true },
+      l10n('exportWithoutTokens'),
+      l10n('exportWithTokens'),
+    );
+    if (!choice) return; // User dismissed the dialog
+    includeTokens = choice === l10n('exportWithTokens');
+  }
+
+  const content = store.exportAll(includeTokens);
   if (!content || content === '[]') {
     vscode.window.showInformationMessage(l10n('noProfilesToExport'));
     return;
