@@ -73,7 +73,8 @@ export class SpeedTester {
       const client = this.createClient(config, timeoutMs);
       const response = await client.messages.create({
         model,
-        max_tokens: 1,
+        max_tokens: 1024,
+        thinking: { type: 'enabled', budget_tokens: 512 },
         messages: [{ role: 'user', content: 'Reply ok.' }],
       });
 
