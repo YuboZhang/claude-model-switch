@@ -174,3 +174,9 @@ git push origin v0.0.1
 - **切换**时只管理 `settings.local.json` 的 `model` 和支持的 `env` 字段；配置中留空的托管字段会从 `settings.local.json` 移除，其他设置会保留
 - 如果配置 ID 找不到对应的 profile，会尝试全字段匹配当前的 `settings.local.json`
 - 切换编辑器或 `settings.local.json` 文件变化时，状态栏和树视图自动刷新
+
+## 安全提示
+
+- **`.gitignore`**：建议将 `.claude/` 加入项目的 `.gitignore` 文件，因为 Token 会以明文形式保存在 `.claude/settings.local.json` 中，避免意外提交到 Git 仓库。
+- **导出配置**：导出的 JSON 文件默认不包含 Token。如需包含 Token，可在导出时选择“包含 Token 导出”，但请注意妥善保管导出文件。
+- **同步**：配置数据（包括 Token）会通过 VS Code Settings Sync 跨设备同步，请确保你的 Microsoft/GitHub 账户安全。

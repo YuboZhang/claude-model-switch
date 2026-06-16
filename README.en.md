@@ -174,3 +174,9 @@ This workflow will:
 - **Switching** manages only the `model` field and supported `env` fields in `<workspace>/.claude/settings.local.json`; managed fields left empty in a profile are removed from `settings.local.json`, while other settings are preserved
 - If the active profile ID is not found, it falls back to full-field matching against the current `settings.local.json`
 - Status bar and tree view auto-refresh when switching editors or when `settings.local.json` changes
+
+## Security Notes
+
+- **`.gitignore`**: We recommend adding `.claude/` to your project's `.gitignore` file, as Auth Tokens are stored in plain text in `.claude/settings.local.json`. This prevents accidentally committing them to Git.
+- **Export**: Exported JSON files do **not** include Auth Tokens by default. You can choose "Export with tokens" if needed, but keep the exported file secure.
+- **Sync**: Profile data (including tokens) is synced across devices via VS Code Settings Sync. Make sure your Microsoft/GitHub account is secure.
