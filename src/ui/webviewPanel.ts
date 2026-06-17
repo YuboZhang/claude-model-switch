@@ -157,6 +157,24 @@ export class WebviewPanel {
     }
   }
 
+  private getExtraEnvVars(profile: Profile | undefined): Array<{ key: string; value: string }> {
+    if (!profile?.env) return [];
+    const knownKeys = new Set([
+      'ANTHROPIC_AUTH_TOKEN',
+      'ANTHROPIC_BASE_URL',
+      'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+      'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME',
+      'ANTHROPIC_DEFAULT_SONNET_MODEL',
+      'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
+      'ANTHROPIC_DEFAULT_OPUS_MODEL',
+      'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
+      'ANTHROPIC_MODEL',
+    ]);
+    return Object.entries(profile.env)
+      .filter(([key]) => !knownKeys.has(key))
+      .map(([key, value]) => ({ key, value: value ?? '' }));
+  }
+
   private getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     const nonce = getNonce();
     const profile = this.options.profile;
@@ -210,6 +228,17 @@ export class WebviewPanel {
     html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', sonnetModel.supportsOneMillionContext ? 'checked' : '');
     html = html.replace('{{ANTHROPIC_MODEL}}', escapeAttr(fallbackModel.model));
     html = html.replace('{{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', fallbackModel.supportsOneMillionContext ? 'checked' : '');
+
+    // Extra env vars
+    const extraEnv = this.getExtraEnvVars(profile);
+    html = html.replace('{{extraEnvVars}}', l10n('webviewExtraEnvVars'));
+    html = html.replace('{{envKey}}', l10n('webviewEnvKey'));
+    html = html.replace('{{envValue}}', l10n('webviewEnvValue'));
+    html = html.replace('{{addEnvVar}}', l10n('webviewAddEnvVar'));
+    html = html.replace('{{removeEnvVar}}', l10n('webviewRemoveEnvVar'));
+    html = html.replace('{{extraEnvData}}', escapeAttr(JSON.stringify(extraEnv)));
+    html = html.replace(/\{\{searchModels\}\}/g, escapeAttr(l10n('webviewSearchModels')));
+    html = html.replace(/\{\{noModelsFound\}\}/g, escapeAttr(l10n('webviewNoModelsFound')));
 
     return html;
   }

@@ -89,6 +89,12 @@ export class SettingsWriter {
         delete env[key];
       }
     }
+    // Write extra env vars (keys not in ENV_KEYS)
+    for (const [key, value] of Object.entries(profileEnv)) {
+      if (!ENV_KEYS.includes(key as keyof ProfileEnv) && value !== undefined && value !== '') {
+        env[key] = value;
+      }
+    }
     settings['env'] = env;
 
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');

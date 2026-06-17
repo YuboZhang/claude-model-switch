@@ -83,6 +83,13 @@ const en = {
   speedModelOrEndpointNotFound: 'Model or endpoint not found',
   speedRateLimited: 'Rate limited',
   speedApiError: 'API error{0}: {1}',
+  webviewExtraEnvVars: 'Extra Environment Variables',
+  webviewEnvKey: 'Key',
+  webviewEnvValue: 'Value',
+  webviewAddEnvVar: 'Add',
+  webviewRemoveEnvVar: 'Remove',
+  webviewSearchModels: 'Search models...',
+  webviewNoModelsFound: 'No models found',
 } as const;
 
 const zh: Record<keyof typeof en, string> = {
@@ -168,6 +175,13 @@ const zh: Record<keyof typeof en, string> = {
   speedModelOrEndpointNotFound: '模型或接口不存在',
   speedRateLimited: '请求频率受限',
   speedApiError: 'API 错误{0}: {1}',
+  webviewExtraEnvVars: '额外环境变量',
+  webviewEnvKey: '键',
+  webviewEnvValue: '值',
+  webviewAddEnvVar: '添加',
+  webviewRemoveEnvVar: '移除',
+  webviewSearchModels: '搜索模型...',
+  webviewNoModelsFound: '未找到模型',
 };
 
 export type MessageKey = keyof typeof en;

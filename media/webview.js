@@ -1,5 +1,5 @@
 const vscode = acquireVsCodeApi();
-const modelSelects = Array.from(document.querySelectorAll('.model-select'));
+const searchableSelects = Array.from(document.querySelectorAll('.searchable-select'));
 const modelSpeedTestBtns = Array.from(document.querySelectorAll('.model-speed-test-btn'));
 const modelsStatus = document.getElementById('modelsStatus');
 const fetchModelsBtn = document.getElementById('fetchModelsBtn');
@@ -15,6 +15,33 @@ const oneMillionContextTargets = [
   'ANTHROPIC_DEFAULT_OPUS_MODEL',
   'ANTHROPIC_MODEL',
 ];
+
+// Extra env vars
+const extraEnvContainer = document.getElementById('extraEnvContainer');
+const addExtraEnvBtn = document.getElementById('addExtraEnvBtn');
+const extraEnvData = JSON.parse(document.body.dataset.extraEnvData || '[]');
+
+function createExtraEnvRow(key, value) {
+  const row = document.createElement('div');
+  row.className = 'extra-env-row';
+  row.innerHTML = `<input type="text" class="extra-env-key" placeholder="${document.body.dataset.envKey || 'Key'}" value="${escapeHtml(key)}" /><input type="text" class="extra-env-value" placeholder="${document.body.dataset.envValue || 'Value'}" value="${escapeHtml(value)}" /><button type="button" class="btn-remove-env">${document.body.dataset.removeEnvVar || 'Remove'}</button>`;
+  row.querySelector('.btn-remove-env').addEventListener('click', function() {
+    row.remove();
+  });
+  return row;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+for (const env of extraEnvData) {
+  extraEnvContainer.appendChild(createExtraEnvRow(env.key, env.value));
+}
+
+addExtraEnvBtn.addEventListener('click', function() {
+  extraEnvContainer.appendChild(createExtraEnvRow('', ''));
+});
 
 for (const targetId of oneMillionContextTargets) {
   const input = document.getElementById(targetId);
@@ -43,17 +70,29 @@ document.getElementById('saveBtn').addEventListener('click', function() {
     name = getFirstModelValue() || document.body.dataset.unnamed || 'Unnamed';
   }
 
+  const env = {
+    ANTHROPIC_AUTH_TOKEN: document.getElementById('ANTHROPIC_AUTH_TOKEN').value,
+    ANTHROPIC_BASE_URL: document.getElementById('ANTHROPIC_BASE_URL').value,
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: getModelValue('ANTHROPIC_DEFAULT_HAIKU_MODEL'),
+    ANTHROPIC_DEFAULT_SONNET_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_SONNET_MODEL'),
+    ANTHROPIC_DEFAULT_OPUS_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_OPUS_MODEL'),
+    ANTHROPIC_MODEL: getModelValueForSave('ANTHROPIC_MODEL'),
+  };
+
+  // Collect extra env vars
+  const envRows = extraEnvContainer.querySelectorAll('.extra-env-row');
+  for (const row of envRows) {
+    const key = row.querySelector('.extra-env-key').value.trim();
+    const value = row.querySelector('.extra-env-value').value.trim();
+    if (key) {
+      env[key] = value;
+    }
+  }
+
   const profile = {
     id: '',
     name: name,
-    env: {
-      ANTHROPIC_AUTH_TOKEN: document.getElementById('ANTHROPIC_AUTH_TOKEN').value,
-      ANTHROPIC_BASE_URL: document.getElementById('ANTHROPIC_BASE_URL').value,
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: getModelValue('ANTHROPIC_DEFAULT_HAIKU_MODEL'),
-      ANTHROPIC_DEFAULT_SONNET_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_SONNET_MODEL'),
-      ANTHROPIC_DEFAULT_OPUS_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_OPUS_MODEL'),
-      ANTHROPIC_MODEL: getModelValueForSave('ANTHROPIC_MODEL'),
-    }
+    env: env,
   };
 
   vscode.postMessage({ type: 'save', profile });
@@ -142,15 +181,41 @@ for (const button of modelSpeedTestBtns) {
   });
 }
 
-for (const select of modelSelects) {
-  select.addEventListener('change', function() {
-    if (!this.value) return;
-    const target = document.getElementById(this.dataset.target);
-    if (!target) return;
-    target.value = this.value;
-    target.dispatchEvent(new Event('input', { bubbles: true }));
+// Searchable select toggle
+for (const select of searchableSelects) {
+  const displayInput = select.querySelector('.searchable-select-input');
+  const searchInput = select.querySelector('.searchable-select-search');
+
+  displayInput.addEventListener('click', function(e) {
+    e.stopPropagation();
+    // Close other selects
+    searchableSelects.forEach(s => { if (s !== select) s.classList.remove('open'); });
+    select.classList.toggle('open');
+    if (select.classList.contains('open')) {
+      searchInput.value = '';
+      searchInput.focus();
+      // Show all items
+      select.querySelectorAll('.searchable-select-item').forEach(item => {
+        item.style.display = '';
+      });
+      select.querySelector('.searchable-select-empty').style.display = 'none';
+    }
+  });
+
+  searchInput.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+
+  const dropdown = select.querySelector('.searchable-select-dropdown');
+  dropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
   });
 }
+
+// Close dropdowns on outside click
+document.addEventListener('click', function() {
+  searchableSelects.forEach(s => s.classList.remove('open'));
+});
 
 // Auto-fill name from the first configured model if name is empty
 for (const inputId of modelNameSourceIds) {
@@ -201,25 +266,55 @@ function formatOneMillionContextModel(value, supportsOneMillionContext) {
 }
 
 function populateModelSelects(models) {
-  const placeholder = document.body.dataset.selectPlaceholder || 'Select model';
-  for (const select of modelSelects) {
+  for (const select of searchableSelects) {
     const target = document.getElementById(select.dataset.target);
     const currentValue = getModelValueFromInput(target);
-    select.replaceChildren(createOption('', placeholder));
+    const list = select.querySelector('.searchable-select-list');
+    const searchInput = select.querySelector('.searchable-select-search');
+    const emptyMsg = select.querySelector('.searchable-select-empty');
+    const displayInput = select.querySelector('.searchable-select-input');
 
+    // Populate list
+    list.innerHTML = '';
     for (const model of models) {
-      select.appendChild(createOption(model, model));
+      const item = document.createElement('div');
+      item.className = 'searchable-select-item';
+      item.textContent = model;
+      item.dataset.value = model;
+      if (model === currentValue) {
+        item.classList.add('selected');
+        displayInput.value = model;
+      }
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        displayInput.value = this.dataset.value;
+        target.value = this.dataset.value;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        select.classList.remove('open');
+        // Update selected state
+        list.querySelectorAll('.searchable-select-item').forEach(i => i.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+      list.appendChild(item);
     }
 
-    select.value = models.includes(currentValue) ? currentValue : '';
-  }
-}
+    if (!currentValue) {
+      displayInput.value = '';
+    }
 
-function createOption(value, text) {
-  const option = document.createElement('option');
-  option.value = value;
-  option.textContent = text;
-  return option;
+    // Search filter
+    searchInput.value = '';
+    searchInput.addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      let hasVisible = false;
+      list.querySelectorAll('.searchable-select-item').forEach(item => {
+        const match = item.textContent.toLowerCase().includes(query);
+        item.style.display = match ? '' : 'none';
+        if (match) hasVisible = true;
+      });
+      emptyMsg.style.display = hasVisible ? 'none' : '';
+    });
+  }
 }
 
 function setStatus(text, type) {

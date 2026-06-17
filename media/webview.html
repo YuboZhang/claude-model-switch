@@ -7,7 +7,7 @@
   <title>{{title}}</title>
   <link rel="stylesheet" nonce="{{nonce}}" href="{{cssUri}}">
 </head>
-<body data-unnamed="{{unnamed}}" data-fetch-loading="{{fetchModelsLoading}}" data-fetch-success="{{fetchModelsSuccess}}" data-fetch-failed="{{fetchModelsFailed}}" data-base-url-required="{{baseUrlRequired}}" data-select-placeholder="{{selectModelPlaceholder}}">
+<body data-unnamed="{{unnamed}}" data-fetch-loading="{{fetchModelsLoading}}" data-fetch-success="{{fetchModelsSuccess}}" data-fetch-failed="{{fetchModelsFailed}}" data-base-url-required="{{baseUrlRequired}}" data-select-placeholder="{{selectModelPlaceholder}}" data-search-models="{{searchModels}}" data-no-models-found="{{noModelsFound}}" data-extra-env-data="{{extraEnvData}}" data-env-key="{{envKey}}" data-env-value="{{envValue}}" data-remove-env-var="{{removeEnvVar}}">
   <h2>{{heading}}</h2>
 
   <div class="section-title">{{environmentVariables}}</div>
@@ -36,9 +36,14 @@
     <label for="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{defaultHaikuModel}}</label>
     <div class="model-field-row">
       <input type="text" id="ANTHROPIC_DEFAULT_HAIKU_MODEL" value="{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}" />
-      <select class="model-select" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL" aria-label="{{selectModelPlaceholder}}">
-        <option value="">{{selectModelPlaceholder}}</option>
-      </select>
+      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">
+        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+        <div class="searchable-select-dropdown">
+          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+          <div class="searchable-select-list"></div>
+          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+        </div>
+      </div>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{modelSpeedTest}}</button>
     </div>
   </div>
@@ -47,9 +52,14 @@
     <label for="ANTHROPIC_DEFAULT_SONNET_MODEL">{{defaultSonnetModel}}</label>
     <div class="model-field-row">
       <input type="text" id="ANTHROPIC_DEFAULT_SONNET_MODEL" value="{{ANTHROPIC_DEFAULT_SONNET_MODEL}}" />
-      <select class="model-select" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL" aria-label="{{selectModelPlaceholder}}">
-        <option value="">{{selectModelPlaceholder}}</option>
-      </select>
+      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">
+        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+        <div class="searchable-select-dropdown">
+          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+          <div class="searchable-select-list"></div>
+          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+        </div>
+      </div>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">{{modelSpeedTest}}</button>
       <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
@@ -59,9 +69,14 @@
     <label for="ANTHROPIC_DEFAULT_OPUS_MODEL">{{defaultOpusModel}}</label>
     <div class="model-field-row">
       <input type="text" id="ANTHROPIC_DEFAULT_OPUS_MODEL" value="{{ANTHROPIC_DEFAULT_OPUS_MODEL}}" />
-      <select class="model-select" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL" aria-label="{{selectModelPlaceholder}}">
-        <option value="">{{selectModelPlaceholder}}</option>
-      </select>
+      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">
+        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+        <div class="searchable-select-dropdown">
+          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+          <div class="searchable-select-list"></div>
+          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+        </div>
+      </div>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">{{modelSpeedTest}}</button>
       <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
@@ -71,13 +86,23 @@
     <label for="ANTHROPIC_MODEL">{{fallbackModel}}</label>
     <div class="model-field-row">
       <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
-      <select class="model-select" data-target="ANTHROPIC_MODEL" aria-label="{{selectModelPlaceholder}}">
-        <option value="">{{selectModelPlaceholder}}</option>
-      </select>
+      <div class="searchable-select" data-target="ANTHROPIC_MODEL">
+        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+        <div class="searchable-select-dropdown">
+          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+          <div class="searchable-select-list"></div>
+          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+        </div>
+      </div>
       <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_MODEL">{{modelSpeedTest}}</button>
       <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
   </div>
+
+  <div class="section-title">{{extraEnvVars}}</div>
+
+  <div class="extra-env-container" id="extraEnvContainer"></div>
+  <button type="button" class="btn-secondary" id="addExtraEnvBtn">{{addEnvVar}}</button>
 
   <div class="field">
     <label for="name">{{profileName}}</label>
