@@ -102,12 +102,23 @@ export class WebviewPanel {
               },
             };
             const result = await this.speedTester.testProfile(profile);
+            let formattedText = '';
+            if (result.status === 'success') {
+              if (result.firstTokenMs !== undefined && result.speedTokensPerSec !== undefined) {
+                formattedText = l10n('webviewSpeedResultSuccess', result.firstTokenMs, result.durationMs, result.speedTokensPerSec);
+              } else {
+                formattedText = `${result.durationMs}ms`;
+              }
+            }
             await this.panel.webview.postMessage({
               type: 'modelSpeedTestResult',
               requestId,
               target,
               status: result.status,
               durationMs: result.durationMs,
+              firstTokenMs: result.firstTokenMs,
+              speedTokensPerSec: result.speedTokensPerSec,
+              formattedText,
               requestedModel: model,
               model: result.model,
               error: result.error,
@@ -241,6 +252,7 @@ export class WebviewPanel {
     html = html.replace('{{extraEnvData}}', escapeAttr(JSON.stringify(extraEnv)));
     html = html.replace(/\{\{searchModels\}\}/g, escapeAttr(l10n('webviewSearchModels')));
     html = html.replace(/\{\{noModelsFound\}\}/g, escapeAttr(l10n('webviewNoModelsFound')));
+    html = html.replace('{{pleaseFetchModels}}', escapeAttr(l10n('webviewPleaseFetchModels')));
 
     return html;
   }

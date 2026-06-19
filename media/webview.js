@@ -71,6 +71,18 @@ for (const targetId of oneMillionContextTargets) {
   if (checkbox) checkbox.checked = checkbox.checked || parsed.supportsOneMillionContext;
 }
 
+// Initialize display inputs from target inputs on page load
+for (const id of modelNameSourceIds) {
+  const targetInput = document.getElementById(id);
+  if (targetInput && targetInput.value) {
+    const select = document.querySelector(`.searchable-select[data-target="${id}"]`);
+    const displayInput = select?.querySelector('.searchable-select-input');
+    if (displayInput) {
+      displayInput.value = parseOneMillionContextModel(targetInput.value).model;
+    }
+  }
+}
+
 // Toggle token visibility with eye icon inside input
 document.getElementById('toggleAuthToken').addEventListener('click', function() {
   const input = document.getElementById('ANTHROPIC_AUTH_TOKEN');
@@ -169,7 +181,8 @@ window.addEventListener('message', function(event) {
       if (message.status === 'success') {
         const modelText = requestedModel || returnedModel;
         const returnedText = returnedModel && returnedModel !== requestedModel ? ` → ${returnedModel}` : '';
-        const text = `${message.durationMs}ms ${modelText}${returnedText}`.trim();
+        const speedText = message.formattedText || `${message.durationMs}ms`;
+        const text = `${speedText} ${modelText}${returnedText}`.trim();
         if (statusEl) setRowStatus(statusEl, text, 'success');
         else setStatus(text, 'success');
       } else {
@@ -218,8 +231,29 @@ for (const select of searchableSelects) {
     e.stopPropagation();
     // Close other selects
     searchableSelects.forEach(s => { if (s !== select) s.classList.remove('open'); });
+
+    // Check if the model list is empty
+    const list = select.querySelector('.searchable-select-list');
+    const hasModels = list && list.querySelectorAll('.searchable-select-item').length > 0;
+    const searchInput = select.querySelector('.searchable-select-search');
+    const emptyMsg = select.querySelector('.searchable-select-empty');
+
+    if (!hasModels) {
+      if (searchInput) searchInput.style.display = 'none';
+      if (emptyMsg) {
+        emptyMsg.textContent = document.body.dataset.pleaseFetchModels || 'Please fetch models';
+        emptyMsg.style.display = 'block';
+      }
+    } else {
+      if (searchInput) searchInput.style.display = '';
+      if (emptyMsg) {
+        emptyMsg.textContent = document.body.dataset.noModelsFound || 'No models found';
+        emptyMsg.style.display = 'none';
+      }
+    }
+
     select.classList.toggle('open');
-    if (select.classList.contains('open')) {
+    if (select.classList.contains('open') && hasModels) {
       searchInput.value = '';
       searchInput.focus();
       // Show all items
@@ -227,7 +261,6 @@ for (const select of searchableSelects) {
         item.style.display = '';
         item.classList.remove('highlighted');
       });
-      select.querySelector('.searchable-select-empty').style.display = 'none';
       // 高亮当前 .selected 项（若有），否则高亮第一项
       const items = select.querySelectorAll('.searchable-select-item');
       let toHighlight = null;

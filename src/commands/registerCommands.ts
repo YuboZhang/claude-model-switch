@@ -74,6 +74,7 @@ export function registerCommands(
       if (item?.profile) {
         await writer.switchToProfile(item.profile, previousProfile);
         refreshAll();
+        vscode.window.showInformationMessage(l10n('profileSwitched', formatProfileLabel(item.profile)));
         return;
       }
 
@@ -81,6 +82,7 @@ export function registerCommands(
       if (profile) {
         await writer.switchToProfile(profile, previousProfile);
         refreshAll();
+        vscode.window.showInformationMessage(l10n('profileSwitched', formatProfileLabel(profile)));
       }
     }),
 
@@ -126,7 +128,7 @@ export function registerCommands(
 
       const result = await vscode.window.withProgress(
         {
-          location: vscode.ProgressLocation.Notification,
+          location: vscode.ProgressLocation.Window,
           title: l10n('testingProfile', formatProfileLabel(profile)),
           cancellable: false,
         },
@@ -136,11 +138,17 @@ export function registerCommands(
       treeProvider.setSpeedResult(profile.id, {
         status: result.status,
         durationMs: result.durationMs,
+        firstTokenMs: result.firstTokenMs,
+        speedTokensPerSec: result.speedTokensPerSec,
         error: result.error,
       });
 
       if (result.status === 'success') {
-        vscode.window.showInformationMessage(`${profile.name}: ${result.durationMs}ms (${result.model ?? l10n('unknownModel')})`);
+        if (result.firstTokenMs !== undefined && result.speedTokensPerSec !== undefined) {
+          vscode.window.showInformationMessage(`${profile.name}: ${l10n('webviewSpeedResultSuccess', result.firstTokenMs, result.durationMs, result.speedTokensPerSec)} (${result.model ?? l10n('unknownModel')})`);
+        } else {
+          vscode.window.showInformationMessage(`${profile.name}: ${result.durationMs}ms (${result.model ?? l10n('unknownModel')})`);
+        }
       } else {
         vscode.window.showErrorMessage(`${profile.name}: ${result.error ?? l10n('speedTestFailed')} (${result.durationMs}ms)`);
       }
@@ -178,24 +186,33 @@ export function registerCommands(
 
       await exitSelectionMode();
 
+      const speedResultsTemp: Array<{ profileId: string; result: any }> = [];
+
       const results = await vscode.window.withProgress(
         {
-          location: vscode.ProgressLocation.Notification,
+          location: vscode.ProgressLocation.Window,
           title: l10n('testingAllProfiles'),
           cancellable: false,
         },
         (progress) => speedTester.testProfiles(selectedProfiles, (result, completed, total) => {
-          treeProvider.setSpeedResult(result.profile.id, {
-            status: result.status,
-            durationMs: result.durationMs,
-            error: result.error,
+          speedResultsTemp.push({
+            profileId: result.profile.id,
+            result: {
+              status: result.status,
+              durationMs: result.durationMs,
+              firstTokenMs: result.firstTokenMs,
+              speedTokensPerSec: result.speedTokensPerSec,
+              error: result.error,
+            }
           });
           progress.report({
-            increment: 100 / total,
             message: `${completed}/${total} ${formatProfileLabel(result.profile)}`,
           });
         }),
       );
+
+      // 全部测完后，一次性更新列表，仅重绘 1 次
+      treeProvider.setSpeedResults(speedResultsTemp);
 
       showSpeedTestResults(speedOutput, results);
       const successCount = results.filter(result => result.status === 'success').length;
@@ -299,9 +316,13 @@ function showSpeedTestResults(output: vscode.OutputChannel, results: SpeedTestRe
   output.appendLine(l10n('speedResultsHeader'));
   output.appendLine('');
   for (const result of sorted) {
-    const model = result.model ? ` ${result.model}` : '';
+    const model = result.model ? ` (${result.model})` : '';
     if (result.status === 'success') {
-      output.appendLine(l10n('speedResultSuccess', result.durationMs, result.profile.name, model));
+      if (result.firstTokenMs !== undefined && result.speedTokensPerSec !== undefined) {
+        output.appendLine(l10n('speedResultSuccessDetail', result.firstTokenMs, result.durationMs, result.speedTokensPerSec, result.profile.name, model));
+      } else {
+        output.appendLine(l10n('speedResultSuccess', result.durationMs, result.profile.name, model));
+      }
     } else {
       output.appendLine(l10n('speedResultError', result.durationMs, result.profile.name, model, result.error ?? l10n('speedTestFailed')));
     }

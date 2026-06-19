@@ -27,9 +27,6 @@ body {
   padding: 16px 20px;
   max-width: 680px;
 }
-h2 {
-  margin-bottom: 10px;
-}
 
 /* 卡片分组（不裁切：让可搜索下拉框能溢出卡片边界显示） */
 .card {
@@ -43,7 +40,7 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   font-size: 13px;
   font-weight: 600;
   color: var(--label-fg);
@@ -51,6 +48,11 @@ h2 {
   border-radius: var(--radius) var(--radius) 0 0;
   cursor: pointer;
   user-select: none;
+  background: var(--vscode-sideBar-background, color-mix(in srgb, var(--bg) 97%, var(--fg) 3%));
+  transition: background-color 0.15s ease;
+}
+.card-header:hover {
+  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 93%, var(--fg) 7%));
 }
 .card-chevron {
   flex: 0 0 auto;
@@ -95,7 +97,8 @@ h2 {
 }
 .field input:focus,
 .field select:focus {
-  outline: 1px solid var(--btn-bg);
+  outline: 1px solid var(--vscode-focusBorder, var(--btn-bg));
+  outline-offset: -1px;
 }
 .field select {
   padding: 6px 8px;
@@ -132,10 +135,6 @@ h2 {
 }
 .field-row > .btn-secondary {
   flex: 0 0 auto;
-}
-/* 测速结果对齐到输入框列（缩进掉左标签宽度 + 间距） */
-.model-field .row-status {
-  padding-left: calc(var(--label-col) + 8px);
 }
 .model-field-row select {
   flex: 0 0 var(--select-col);
@@ -191,41 +190,71 @@ h2 {
 
 /* 获取模型列表状态（顶部 #modelsStatus） */
 .models-status {
-  min-height: 14px;
-  margin-top: 2px;
-  padding-left: calc(var(--label-col) + 8px);
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 11px;
-  color: var(--label-fg);
-  opacity: 0.75;
+  color: var(--fg);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  margin-left: calc(var(--label-col) + 8px);
 }
 .models-status.success {
+  background-color: color-mix(in srgb, var(--success-fg) 12%, transparent);
   color: var(--success-fg);
+  border-color: color-mix(in srgb, var(--success-fg) 25%, transparent);
   opacity: 1;
 }
 .models-status.error {
+  background-color: color-mix(in srgb, var(--error-fg) 12%, transparent);
   color: var(--error-fg);
+  border-color: color-mix(in srgb, var(--error-fg) 25%, transparent);
   opacity: 1;
+}
+.models-status.loading {
+  background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  opacity: 0.85;
 }
 
 /* 单行测速结果就近 */
 .row-status {
-  min-height: 14px;
-  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 11px;
-  color: var(--label-fg);
-  opacity: 0.75;
+  color: var(--fg);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 .row-status.success {
+  background-color: color-mix(in srgb, var(--success-fg) 12%, transparent);
   color: var(--success-fg);
+  border-color: color-mix(in srgb, var(--success-fg) 25%, transparent);
   opacity: 1;
 }
 .row-status.error {
+  background-color: color-mix(in srgb, var(--error-fg) 12%, transparent);
   color: var(--error-fg);
+  border-color: color-mix(in srgb, var(--error-fg) 25%, transparent);
   opacity: 1;
 }
 .row-status.loading {
-  color: var(--label-fg);
-  opacity: 0.75;
+  background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  opacity: 0.85;
+}
+/* 测速结果左侧缩进对齐，使之与输入框左侧对齐 */
+.model-field .row-status {
+  margin-left: calc(var(--label-col) + 8px);
 }
 /* 未测速/未获取时不预留空间，避免空状态行白占纵向空间 */
 .row-status:empty,
@@ -282,8 +311,10 @@ h2 {
 .eye-toggle.showing .icon-eye-off { display: block; }
 .actions {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-bottom: 24px;
 }
 .btn-primary {
   background: var(--btn-bg);
@@ -323,6 +354,25 @@ h2 {
   position: relative;
   flex: 0 0 var(--select-col);
 }
+.searchable-select::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--vscode-descriptionForeground, var(--fg));
+  opacity: 0.7;
+  pointer-events: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.searchable-select.open::after {
+  transform: translateY(-50%) rotate(180deg);
+  opacity: 1;
+}
 .searchable-select-input {
   width: 100%;
   padding: 6px 28px 6px 8px;
@@ -347,8 +397,7 @@ h2 {
 .searchable-select-input:focus,
 .searchable-select.open .searchable-select-input {
   outline: none;
-  border-color: var(--btn-bg);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btn-bg) 28%, transparent);
+  border-color: var(--vscode-focusBorder, var(--btn-bg));
 }
 
 /* 下拉：默认隐藏不占位不拦截，靠 opacity/visibility/transform 做动画 */
@@ -360,7 +409,7 @@ h2 {
   background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--vscode-widget-shadow, 0 4px 12px rgba(0, 0, 0, 0.25));
   z-index: 1000;
   max-height: 220px;
   overflow: hidden;
@@ -406,6 +455,19 @@ h2 {
   max-height: 150px;
   flex: 1 1 auto;
 }
+.searchable-select-list::-webkit-scrollbar {
+  width: 6px;
+}
+.searchable-select-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.searchable-select-list::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+  border-radius: 3px;
+}
+.searchable-select-list::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7));
+}
 .searchable-select-item {
   padding: 4px 8px;
   cursor: pointer;
@@ -444,9 +506,9 @@ h2 {
 .searchable-select-empty {
   padding: 8px;
   font-size: 12px;
-  color: var(--label-fg);
-  opacity: 0.6;
-  text-align: center;
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  text-align: left;
+  box-sizing: border-box;
 }
 
 /* Extra Environment Variables */
@@ -454,7 +516,25 @@ h2 {
   margin-bottom: 8px;
 }
 #addExtraEnvBtn {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin-right: calc(58px + 8px); /* 与变量行的右侧 1M 占位保持像素级对齐 */
+  box-sizing: border-box;
+  border: 1px dashed var(--vscode-panel-border, var(--border));
+  background: transparent;
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+#addExtraEnvBtn:hover {
+  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 95%, var(--fg) 5%));
+  border-color: var(--vscode-focusBorder, var(--btn-bg));
+  color: var(--vscode-button-hoverBackground, var(--fg));
 }
 .extra-env-row {
   display: flex;
@@ -500,10 +580,12 @@ h2 {
   font-size: 13px;
   border-radius: var(--radius);
   white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .extra-env-row .btn-remove-env:hover {
-  background: var(--btn-hover);
-  color: var(--btn-fg);
+  background: var(--vscode-statusBarItem-errorBackground, #c72e2e);
+  color: var(--vscode-statusBarItem-errorForeground, #ffffff);
+  border-color: transparent;
 }
 
 /* 次级按钮统一固定列宽：获取 / 测速 / 移除 同宽同列，

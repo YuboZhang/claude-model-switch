@@ -11,6 +11,8 @@ export interface SpeedTestResult {
   profile: Profile;
   status: SpeedTestStatus;
   durationMs: number;
+  firstTokenMs?: number;
+  speedTokensPerSec?: number;
   model?: string;
   error?: string;
 }
@@ -69,28 +71,93 @@ export class SpeedTester {
       };
     }
 
+    // 1. 优先尝试流式测速
     try {
       const client = this.createClient(config, timeoutMs);
-      const response = await client.messages.create({
+
+      let firstTokenAt = 0;
+      let outputTokens = 0;
+
+      const stream = await client.messages.create({
         model,
-        max_tokens: 1,
+        max_tokens: 15,
         messages: [{ role: 'user', content: 'Reply ok.' }],
+        stream: true,
       });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta') {
+          if (!firstTokenAt) {
+            firstTokenAt = Date.now();
+          }
+        }
+        if (event.type === 'message_delta') {
+          if (event.usage && event.usage.output_tokens) {
+            outputTokens = event.usage.output_tokens;
+          }
+        }
+      }
+
+      const endedAt = Date.now();
+      const firstTokenMs = firstTokenAt ? (firstTokenAt - startedAt) : undefined;
+      const durationMs = endedAt - startedAt;
+
+      const generationDurationMs = endedAt - (firstTokenAt || startedAt);
+      const speedTokensPerSec = generationDurationMs > 0 && outputTokens > 1
+        ? Number(((outputTokens - 1) / (generationDurationMs / 1000)).toFixed(1))
+        : undefined;
 
       return {
         profile,
         status: 'success',
-        durationMs: Date.now() - startedAt,
-        model: response.model,
-      };
-    } catch (error) {
-      return {
-        profile,
-        status: 'error',
-        durationMs: Date.now() - startedAt,
+        durationMs,
+        firstTokenMs,
+        speedTokensPerSec,
         model,
-        error: this.formatError(error),
       };
+    } catch (streamError) {
+      // 检查是否为超时错误。硬性超时错误不应该执行降级，直接返回失败，防止双倍超时耗时
+      const isTimeout = streamError instanceof Error && (
+        streamError.name === 'TimeoutError'
+        || streamError.name === 'AbortError'
+        || streamError.message.toLowerCase().includes('timeout')
+        || streamError.message.toLowerCase().includes('aborted')
+      );
+
+      if (isTimeout) {
+        return {
+          profile,
+          status: 'error',
+          durationMs: Date.now() - startedAt,
+          model,
+          error: this.formatError(streamError),
+        };
+      }
+
+      // 2. 优雅降级：仅对非超时的其它错误（如接口不支持流式的 400/405 等）回退为非流式的单 Token 请求
+      try {
+        const client = this.createClient(config, timeoutMs);
+        const response = await client.messages.create({
+          model,
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'Reply ok.' }],
+        });
+
+        return {
+          profile,
+          status: 'success',
+          durationMs: Date.now() - startedAt,
+          model: response.model,
+        };
+      } catch (fallbackError) {
+        return {
+          profile,
+          status: 'error',
+          durationMs: Date.now() - startedAt,
+          model,
+          error: this.formatError(fallbackError),
+        };
+      }
     }
   }
 
