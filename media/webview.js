@@ -43,6 +43,26 @@ addExtraEnvBtn.addEventListener('click', function() {
   extraEnvContainer.appendChild(createExtraEnvRow('', ''));
 });
 
+// Collapsible cards：点击分组标题折叠/展开，折叠状态在面板存活期内记忆
+(function setupCollapsibleCards() {
+  const state = vscode.getState() || {};
+  const collapsed = state.collapsedCards || {};
+  document.querySelectorAll('.card').forEach(function(card, idx) {
+    const header = card.querySelector('.card-header');
+    if (!header) return;
+    const stored = collapsed[idx];
+    const isCollapsed = stored === undefined ? card.hasAttribute('data-default-collapsed') : stored;
+    if (isCollapsed) card.classList.add('collapsed');
+    header.addEventListener('click', function() {
+      card.classList.toggle('collapsed');
+      collapsed[idx] = card.classList.contains('collapsed');
+      const s = vscode.getState() || {};
+      s.collapsedCards = collapsed;
+      vscode.setState(s);
+    });
+  });
+})();
+
 for (const targetId of oneMillionContextTargets) {
   const input = document.getElementById(targetId);
   const checkbox = document.getElementById(`${targetId}_ONE_MILLION_CONTEXT`);
@@ -145,14 +165,19 @@ window.addEventListener('message', function(event) {
 
       const requestedModel = message.requestedModel || pending?.model || '';
       const returnedModel = message.model || '';
+      const statusEl = pending?.statusEl;
       if (message.status === 'success') {
         const modelText = requestedModel || returnedModel;
         const returnedText = returnedModel && returnedModel !== requestedModel ? ` → ${returnedModel}` : '';
-        setStatus(`${message.durationMs}ms ${modelText}${returnedText}`.trim(), 'success');
+        const text = `${message.durationMs}ms ${modelText}${returnedText}`.trim();
+        if (statusEl) setRowStatus(statusEl, text, 'success');
+        else setStatus(text, 'success');
       } else {
         const error = message.error || 'Speed test failed';
         const modelText = requestedModel ? `${requestedModel}: ` : '';
-        setStatus(`${modelText}${error} (${message.durationMs}ms)`, 'error');
+        const text = `${modelText}${error} (${message.durationMs}ms)`;
+        if (statusEl) setRowStatus(statusEl, text, 'error');
+        else setStatus(text, 'error');
       }
       break;
     }
@@ -165,10 +190,13 @@ for (const button of modelSpeedTestBtns) {
     const modelInput = document.getElementById(targetId);
     const model = getModelValueFromInput(modelInput);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    pendingModelSpeedTests.set(requestId, { button: this, model });
+    const statusEl = document.querySelector(`.row-status[data-target="${targetId}"]`);
+    pendingModelSpeedTests.set(requestId, { button: this, model, statusEl });
     this.disabled = true;
     this.classList.add('loading');
-    setStatus(model ? `${this.textContent}: ${model}` : this.textContent, 'loading');
+    const loadingText = model ? `${this.textContent}: ${model}` : this.textContent;
+    if (statusEl) setRowStatus(statusEl, loadingText, 'loading');
+    else setStatus(loadingText, 'loading');
 
     vscode.postMessage({
       type: 'testModelSpeed',
@@ -197,8 +225,18 @@ for (const select of searchableSelects) {
       // Show all items
       select.querySelectorAll('.searchable-select-item').forEach(item => {
         item.style.display = '';
+        item.classList.remove('highlighted');
       });
       select.querySelector('.searchable-select-empty').style.display = 'none';
+      // 高亮当前 .selected 项（若有），否则高亮第一项
+      const items = select.querySelectorAll('.searchable-select-item');
+      let toHighlight = null;
+      items.forEach(i => { if (i.classList.contains('selected')) toHighlight = i; });
+      if (!toHighlight && items.length) toHighlight = items[0];
+      if (toHighlight) {
+        toHighlight.classList.add('highlighted');
+        toHighlight.scrollIntoView({ block: 'nearest' });
+      }
     }
   });
 
@@ -210,11 +248,86 @@ for (const select of searchableSelects) {
   dropdown.addEventListener('click', function(e) {
     e.stopPropagation();
   });
+
+  // 键盘导航：ArrowDown/Up 移动高亮、Enter 选中、Escape 关闭
+  const list = select.querySelector('.searchable-select-list');
+  function getVisibleItems() {
+    return Array.from(list.querySelectorAll('.searchable-select-item')).filter(i => i.style.display !== 'none');
+  }
+  function clearHighlight() {
+    list.querySelectorAll('.searchable-select-item.highlighted').forEach(i => i.classList.remove('highlighted'));
+  }
+  function setHighlight(item) {
+    clearHighlight();
+    if (!item) return;
+    item.classList.add('highlighted');
+    item.scrollIntoView({ block: 'nearest' });
+  }
+  function highlightIndex(dir) {
+    const items = getVisibleItems();
+    if (!items.length) return;
+    const currentIdx = items.findIndex(i => i.classList.contains('highlighted'));
+    let nextIdx;
+    if (currentIdx === -1) {
+      nextIdx = dir > 0 ? 0 : items.length - 1;
+    } else {
+      nextIdx = (currentIdx + dir + items.length) % items.length;
+    }
+    setHighlight(items[nextIdx]);
+  }
+  function selectHighlighted() {
+    const items = getVisibleItems();
+    const h = list.querySelector('.searchable-select-item.highlighted') || (items.length ? items[0] : null);
+    if (h) h.click();
+  }
+  function highlightInitial() {
+    clearHighlight();
+    const items = getVisibleItems();
+    if (!items.length) return;
+    const selected = items.find(i => i.classList.contains('selected'));
+    setHighlight(selected || items[0]);
+  }
+
+  displayInput.addEventListener('keydown', function(e) {
+    if (!select.classList.contains('open')) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        e.preventDefault();
+        displayInput.click();
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlightIndex(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlightIndex(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); selectHighlighted(); }
+    else if (e.key === 'Escape') { e.preventDefault(); select.classList.remove('open'); clearHighlight(); }
+  });
+
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlightIndex(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlightIndex(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); selectHighlighted(); }
+    else if (e.key === 'Escape') { e.preventDefault(); select.classList.remove('open'); clearHighlight(); }
+  });
+}
+
+// 鼠标悬停时同步高亮（避免键盘高亮与鼠标脱节）
+for (const select of searchableSelects) {
+  const list = select.querySelector('.searchable-select-list');
+  list.addEventListener('mouseover', function(e) {
+    const item = e.target.closest('.searchable-select-item');
+    if (item) {
+      list.querySelectorAll('.searchable-select-item.highlighted').forEach(i => i.classList.remove('highlighted'));
+      item.classList.add('highlighted');
+    }
+  });
 }
 
 // Close dropdowns on outside click
 document.addEventListener('click', function() {
-  searchableSelects.forEach(s => s.classList.remove('open'));
+  searchableSelects.forEach(s => {
+    s.classList.remove('open');
+    s.querySelectorAll('.searchable-select-item.highlighted').forEach(i => i.classList.remove('highlighted'));
+  });
 });
 
 // Auto-fill name from the first configured model if name is empty
@@ -279,8 +392,12 @@ function populateModelSelects(models) {
     for (const model of models) {
       const item = document.createElement('div');
       item.className = 'searchable-select-item';
-      item.textContent = model;
       item.dataset.value = model;
+      const span = document.createElement('span');
+      span.className = 'item-text';
+      span.textContent = model;
+      item.appendChild(span);
+      item.title = model;
       if (model === currentValue) {
         item.classList.add('selected');
         displayInput.value = model;
@@ -308,7 +425,8 @@ function populateModelSelects(models) {
       const query = this.value.toLowerCase();
       let hasVisible = false;
       list.querySelectorAll('.searchable-select-item').forEach(item => {
-        const match = item.textContent.toLowerCase().includes(query);
+        const text = item.querySelector('.item-text')?.textContent || item.dataset.value || '';
+        const match = text.toLowerCase().includes(query);
         item.style.display = match ? '' : 'none';
         if (match) hasVisible = true;
       });
@@ -320,6 +438,11 @@ function populateModelSelects(models) {
 function setStatus(text, type) {
   modelsStatus.textContent = text;
   modelsStatus.className = `models-status ${type}`;
+}
+
+function setRowStatus(el, text, type) {
+  el.textContent = text;
+  el.className = `row-status ${type}`;
 }
 
 function formatTemplate(template, value) {

@@ -40,7 +40,7 @@ export class SettingsWriter {
     return undefined;
   }
 
-  async switchToProfile(profile: Profile): Promise<void> {
+  async switchToProfile(profile: Profile, previousProfile?: Profile): Promise<void> {
     const root = this.getWorkspaceRoot();
     if (!root) {
       vscode.window.showErrorMessage(l10n('noWorkspaceFolder'));
@@ -69,6 +69,48 @@ export class SettingsWriter {
 
     delete settings['model'];
 
+    const env = settings['env'] && typeof settings['env'] === 'object'
+      ? settings['env'] as Record<string, string>
+      : {};
+
+    // Remove every env key the previous profile wrote (standard + extra) so
+    // stale values, including custom env vars, never leak into the new profile.
+    if (previousProfile) {
+      for (const key of Object.keys(this.buildEffectiveEnv(previousProfile))) {
+        delete env[key];
+      }
+    }
+
+    const effectiveEnv = this.buildEffectiveEnv(profile);
+    // Standard keys always reflect the new profile (set or removed).
+    for (const key of ENV_KEYS) {
+      if (effectiveEnv[key] !== undefined) {
+        env[key] = effectiveEnv[key];
+      } else {
+        delete env[key];
+      }
+    }
+    // Extra env vars from the new profile (keys not in ENV_KEYS).
+    for (const [key, value] of Object.entries(effectiveEnv)) {
+      if (!ENV_KEYS.includes(key as keyof ProfileEnv)) {
+        env[key] = value;
+      }
+    }
+
+    if (Object.keys(env).length === 0) {
+      delete settings['env'];
+    } else {
+      settings['env'] = env;
+    }
+
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+  }
+
+  /**
+   * 计算某个 profile 实际写入 settings 的 env 键值对：展开默认模型名映射、
+   * 过滤空值。返回的 key 集合就是这个 profile 托管的全部 env（含额外变量）。
+   */
+  private buildEffectiveEnv(profile: Profile): Record<string, string> {
     const profileEnv: ProfileEnv = { ...profile.env };
     for (const [modelKey, nameKey] of DEFAULT_MODEL_NAME_PAIRS) {
       const value = profileEnv[modelKey];
@@ -79,25 +121,13 @@ export class SettingsWriter {
       }
     }
 
-    const env = settings['env'] && typeof settings['env'] === 'object'
-      ? settings['env'] as Record<string, string>
-      : {};
-    for (const key of ENV_KEYS) {
-      if (profileEnv[key] !== undefined && profileEnv[key] !== '') {
-        env[key] = profileEnv[key]!;
-      } else {
-        delete env[key];
-      }
-    }
-    // Write extra env vars (keys not in ENV_KEYS)
+    const result: Record<string, string> = {};
     for (const [key, value] of Object.entries(profileEnv)) {
-      if (!ENV_KEYS.includes(key as keyof ProfileEnv) && value !== undefined && value !== '') {
-        env[key] = value;
+      if (value !== undefined && value !== '') {
+        result[key] = value;
       }
     }
-    settings['env'] = env;
-
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    return result;
   }
 
   getActiveProfileId(): string | undefined {
@@ -143,7 +173,7 @@ export class SettingsWriter {
     return trimmed || undefined;
   }
 
-  async clearSettings(): Promise<void> {
+  async clearSettings(activeProfile?: Profile): Promise<void> {
     const root = this.getWorkspaceRoot();
     if (!root) {
       vscode.window.showErrorMessage(l10n('noWorkspaceFolder'));
@@ -165,12 +195,20 @@ export class SettingsWriter {
       return;
     }
 
+    // Standard keys plus any extra env vars the active profile wrote.
+    const keysToClear = new Set<string>(ENV_KEYS as string[]);
+    if (activeProfile) {
+      for (const key of Object.keys(this.buildEffectiveEnv(activeProfile))) {
+        keysToClear.add(key);
+      }
+    }
+
     try {
       const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')) as Record<string, unknown>;
       delete settings['model'];
       if (settings['env'] && typeof settings['env'] === 'object') {
         const env = settings['env'] as Record<string, string>;
-        for (const key of ENV_KEYS) {
+        for (const key of keysToClear) {
           delete env[key];
         }
         if (Object.keys(env).length === 0) {

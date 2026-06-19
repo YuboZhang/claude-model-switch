@@ -9,16 +9,73 @@
   --btn-hover: var(--vscode-button-hoverBackground);
   --label-fg: var(--vscode-editor-foreground);
   --border: var(--vscode-panel-border);
+  --success-fg: var(--vscode-testing-iconPassed);
+  --error-fg: var(--vscode-errorForeground);
+  --radius: 6px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* 统一左标签列宽：连接区/模型区/额外变量区共用，保证各组输入框左边界对齐 */
+  --label-col: 64px;
+  /* 统一次级列宽（模型下拉 / 额外变量值）：保证下拉与值框成列对齐 */
+  --select-col: 190px;
+  /* 统一次级按钮列宽（获取 / 测速 / 移除）：固定宽度，使各组输入框右边界与下拉成列对齐 */
+  --action-col: 72px;
 }
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--vscode-font-family);
-  padding: 20px 30px;
-  max-width: 600px;
+  padding: 16px 20px;
+  max-width: 680px;
 }
-h2 { margin-bottom: 20px; }
-.field { margin-bottom: 16px; }
+h2 {
+  margin-bottom: 10px;
+}
+
+/* 卡片分组（不裁切：让可搜索下拉框能溢出卡片边界显示） */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-fg);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: pointer;
+  user-select: none;
+}
+.card-chevron {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: transform .15s ease;
+}
+.card.collapsed .card-chevron {
+  transform: rotate(-90deg);
+}
+.card.collapsed .card-header {
+  border-bottom: none;
+}
+.card.collapsed .card-body {
+  display: none;
+}
+.card-body {
+  padding: 10px;
+}
+.card-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.field {
+  margin-bottom: 8px;
+}
 .field label {
   display: block;
   color: var(--label-fg);
@@ -31,7 +88,7 @@ h2 { margin-bottom: 20px; }
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
@@ -45,37 +102,43 @@ h2 { margin-bottom: 20px; }
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
 }
-.field-hint {
-  font-size: 11px;
-  color: var(--label-fg);
-  opacity: 0.6;
-  margin-top: 2px;
-}
-.input-row,
+.field-row,
 .model-field-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.model-field-row {
-  position: relative;
-}
-.input-row input,
-.model-field-row input {
+.field-row > input,
+.field-row > .input-wrapper,
+.model-field-row > input {
   flex: 1;
   min-width: 0;
 }
-.input-row .btn-secondary {
+/* 统一左标签列：各组输入框左边界对齐（仅首个标签，排除行内的 1M 开关 label） */
+.field-row > label:first-child,
+.model-field-row > label:first-child {
+  flex: 0 0 var(--label-col);
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.field-row > .btn-secondary {
   flex: 0 0 auto;
 }
+/* 测速结果对齐到输入框列（缩进掉左标签宽度 + 间距） */
+.model-field .row-status {
+  padding-left: calc(var(--label-col) + 8px);
+}
 .model-field-row select {
-  flex: 0 0 190px;
-  max-width: 38%;
+  flex: 0 0 var(--select-col);
 }
 .model-speed-test-btn {
   display: inline-flex;
@@ -98,46 +161,88 @@ h2 { margin-bottom: 20px; }
 .model-speed-test-btn:disabled {
   cursor: wait;
 }
-.field .one-million-context-toggle {
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
+
+/* 1M 开关：行内就近（移入 .model-field-row 末尾，固定宽度，保证各模型行输入框对齐） */
+.one-million-context-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 58px;
   margin: 0;
+  font-size: 12px;
+  color: var(--label-fg);
+  cursor: pointer;
   white-space: nowrap;
 }
-.field .one-million-context-toggle input {
+/* 无 1M 开关的行（Haiku）用等宽占位，让模型输入框右边界与有开关的行对齐 */
+.one-million-context-spacer {
+  flex: 0 0 58px;
+  margin: 0;
+}
+/* 占位掉次级按钮列：令牌行无获取/测速按钮，用它让令牌输入框右边界与基础 URL 输入框一致 */
+.action-col-spacer {
+  flex: 0 0 var(--action-col);
+  margin: 0;
+}
+.one-million-context-toggle input {
   width: auto;
   margin: 0;
 }
+
+/* 获取模型列表状态（顶部 #modelsStatus） */
 .models-status {
-  min-height: 16px;
-  margin-top: 4px;
+  min-height: 14px;
+  margin-top: 2px;
+  padding-left: calc(var(--label-col) + 8px);
   font-size: 11px;
   color: var(--label-fg);
   opacity: 0.75;
 }
 .models-status.success {
-  color: var(--vscode-testing-iconPassed);
+  color: var(--success-fg);
   opacity: 1;
 }
 .models-status.error {
-  color: var(--vscode-errorForeground);
+  color: var(--error-fg);
   opacity: 1;
 }
+
+/* 单行测速结果就近 */
+.row-status {
+  min-height: 14px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--label-fg);
+  opacity: 0.75;
+}
+.row-status.success {
+  color: var(--success-fg);
+  opacity: 1;
+}
+.row-status.error {
+  color: var(--error-fg);
+  opacity: 1;
+}
+.row-status.loading {
+  color: var(--label-fg);
+  opacity: 0.75;
+}
+/* 未测速/未获取时不预留空间，避免空状态行白占纵向空间 */
+.row-status:empty,
+.models-status:empty {
+  display: none;
+}
+
 .btn-secondary {
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 6px 8px;
   cursor: pointer;
   font-size: 13px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   white-space: nowrap;
-  min-width: 110px;
+  min-width: 80px;
 }
 .btn-secondary:hover:not(:disabled) {
   background: var(--btn-hover);
@@ -177,29 +282,33 @@ h2 { margin-bottom: 20px; }
 .eye-toggle.showing .icon-eye-off { display: block; }
 .actions {
   display: flex;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 10px;
 }
 .btn-primary {
   background: var(--btn-bg);
   color: var(--btn-fg);
   border: none;
-  padding: 8px 20px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 2px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  min-width: 80px;
 }
 .btn-primary:hover { background: var(--btn-hover); }
 .btn-cancel {
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  padding: 8px 20px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 2px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  min-width: 80px;
 }
 .btn-cancel:hover { opacity: 0.8; }
+
+/* 兼容旧 section 标题写法（卡片化后 HTML 改用 .card-header） */
 .section-title {
   font-size: 14px;
   font-weight: 600;
@@ -212,8 +321,7 @@ h2 { margin-bottom: 20px; }
 /* Searchable Select */
 .searchable-select {
   position: relative;
-  flex: 0 0 190px;
-  max-width: 38%;
+  flex: 0 0 var(--select-col);
 }
 .searchable-select-input {
   width: 100%;
@@ -221,7 +329,7 @@ h2 { margin-bottom: 20px; }
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
@@ -229,37 +337,51 @@ h2 { margin-bottom: 20px; }
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
+  transition: border-color .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.searchable-select-input:hover {
+  background-color: color-mix(in srgb, var(--input-bg) 88%, var(--btn-bg) 6%);
 }
 .searchable-select-input:focus,
 .searchable-select.open .searchable-select-input {
   outline: none;
   border-color: var(--btn-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btn-bg) 28%, transparent);
 }
+
+/* 下拉：默认隐藏不占位不拦截，靠 opacity/visibility/transform 做动画 */
 .searchable-select-dropdown {
-  display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
-  right: 0;
+  width: 100%;
   background: var(--input-bg);
-  border: 1px solid var(--btn-bg);
-  border-top: none;
-  border-radius: 0 0 2px 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   z-index: 1000;
-  max-height: 240px;
+  max-height: 220px;
   overflow: hidden;
   flex-direction: column;
+  /* 关闭态：不占位、不拦截、透明 */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
 }
 .searchable-select.open .searchable-select-dropdown {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
   display: flex;
 }
 .searchable-select-search {
   width: 100%;
-  padding: 8px;
+  padding: 6px 8px;
   background: var(--input-bg);
   color: var(--input-fg);
   border: none;
@@ -269,9 +391,11 @@ h2 { margin-bottom: 20px; }
   box-sizing: border-box;
   flex: 0 0 auto;
   outline: none;
+  transition: box-shadow .12s ease, border-bottom-color .12s ease;
 }
 .searchable-select-search:focus {
   border-bottom-color: var(--btn-bg);
+  box-shadow: 0 2px 0 -1px color-mix(in srgb, var(--btn-bg) 35%, transparent);
 }
 .searchable-select-search::placeholder {
   color: var(--input-fg);
@@ -279,24 +403,43 @@ h2 { margin-bottom: 20px; }
 }
 .searchable-select-list {
   overflow-y: auto;
-  max-height: 200px;
+  max-height: 150px;
   flex: 1 1 auto;
 }
 .searchable-select-item {
-  padding: 6px 8px;
+  padding: 4px 8px;
   cursor: pointer;
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  transition: background-color .12s ease, color .12s ease;
+}
+.searchable-select-item:hover,
+.searchable-select-item.highlighted {
+  background: var(--vscode-list-hoverBackground);
+  color: var(--vscode-list-hoverForeground, var(--fg));
+}
+.searchable-select-item.selected {
+  background: color-mix(in srgb, var(--btn-bg) 12%, transparent);
+  color: var(--input-fg);
+}
+.searchable-select-item .item-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.searchable-select-item:hover {
-  background: var(--btn-hover);
-  color: var(--btn-fg);
+.searchable-select-item.selected .item-text {
+  padding-right: 18px;
 }
-.searchable-select-item.selected {
-  background: var(--btn-bg);
-  color: var(--btn-fg);
+.searchable-select-item.selected::after {
+  content: '✓';
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--btn-bg);
 }
 .searchable-select-empty {
   padding: 8px;
@@ -308,7 +451,7 @@ h2 { margin-bottom: 20px; }
 
 /* Extra Environment Variables */
 .extra-env-container {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 #addExtraEnvBtn {
   margin-bottom: 8px;
@@ -317,7 +460,9 @@ h2 { margin-bottom: 20px; }
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  /* key 自身即变量名（充当标签），从左边缘起；右侧预留 1M 列，使 value/移除 与模型行 下拉/测速 成列对齐 */
+  padding-right: calc(58px + 8px);
 }
 .extra-env-row input {
   flex: 1;
@@ -326,7 +471,7 @@ h2 { margin-bottom: 20px; }
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
@@ -335,8 +480,7 @@ h2 { margin-bottom: 20px; }
   flex: 1;
 }
 .extra-env-row .extra-env-value {
-  flex: 0 0 190px;
-  max-width: 38%;
+  flex: 0 0 var(--select-col);
 }
 .extra-env-row input:focus {
   outline: none;
@@ -344,20 +488,31 @@ h2 { margin-bottom: 20px; }
 }
 .extra-env-row .btn-remove-env {
   flex: 0 0 auto;
-  min-width: 110px;
+  min-width: 80px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 6px 8px;
   cursor: pointer;
   font-size: 13px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   white-space: nowrap;
 }
 .extra-env-row .btn-remove-env:hover {
   background: var(--btn-hover);
   color: var(--btn-fg);
+}
+
+/* 次级按钮统一固定列宽：获取 / 测速 / 移除 同宽同列，
+   使基础 URL 输入框右边界、模型下拉、额外变量值框三者成列对齐。
+   置于文件末尾以覆盖 .btn-secondary / .btn-remove-env 的 min-width。 */
+#fetchModelsBtn,
+.model-speed-test-btn,
+.extra-env-row .btn-remove-env {
+  flex: 0 0 var(--action-col);
+  width: var(--action-col);
+  min-width: 0;
 }

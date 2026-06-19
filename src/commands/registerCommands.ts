@@ -53,7 +53,9 @@ export function registerCommands(
       l10n('clear'),
     );
     if (confirm === l10n('clear')) {
-      await writer.clearSettings();
+      const activeId = writer.getActiveProfileId();
+      const activeProfile = activeId ? store.getById(activeId) : undefined;
+      await writer.clearSettings(activeProfile);
       refreshAll();
     }
   };
@@ -66,15 +68,18 @@ export function registerCommands(
     }),
 
     vscode.commands.registerCommand('claude-model-switch.switchProfile', async (item?: { profile: Profile }) => {
+      const previousId = writer.getActiveProfileId();
+      const previousProfile = previousId ? store.getById(previousId) : undefined;
+
       if (item?.profile) {
-        await writer.switchToProfile(item.profile);
+        await writer.switchToProfile(item.profile, previousProfile);
         refreshAll();
         return;
       }
 
       const profile = await pickProfile(store, writer, l10n('switchClaudeModel'));
       if (profile) {
-        await writer.switchToProfile(profile);
+        await writer.switchToProfile(profile, previousProfile);
         refreshAll();
       }
     }),

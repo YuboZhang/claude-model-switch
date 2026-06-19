@@ -10,104 +10,128 @@
 <body data-unnamed="{{unnamed}}" data-fetch-loading="{{fetchModelsLoading}}" data-fetch-success="{{fetchModelsSuccess}}" data-fetch-failed="{{fetchModelsFailed}}" data-base-url-required="{{baseUrlRequired}}" data-select-placeholder="{{selectModelPlaceholder}}" data-search-models="{{searchModels}}" data-no-models-found="{{noModelsFound}}" data-extra-env-data="{{extraEnvData}}" data-env-key="{{envKey}}" data-env-value="{{envValue}}" data-remove-env-var="{{removeEnvVar}}">
   <h2>{{heading}}</h2>
 
-  <div class="section-title">{{environmentVariables}}</div>
-
-  <div class="field">
-    <label for="ANTHROPIC_AUTH_TOKEN">{{authToken}}</label>
-    <div class="input-wrapper">
-      <input type="password" id="ANTHROPIC_AUTH_TOKEN" value="{{ANTHROPIC_AUTH_TOKEN}}" />
-      <button class="eye-toggle" id="toggleAuthToken" title="{{showHide}}">
-        <svg class="icon-eye" viewBox="0 0 24 24" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        <svg class="icon-eye-off" viewBox="0 0 24 24" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.19a3 3 0 1 1-4.24-4.24" fill="none" stroke="currentColor" stroke-width="2"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <div class="field">
-    <label for="ANTHROPIC_BASE_URL">{{baseUrl}}</label>
-    <div class="input-row">
-      <input type="text" id="ANTHROPIC_BASE_URL" value="{{ANTHROPIC_BASE_URL}}" />
-      <button class="btn-secondary" id="fetchModelsBtn">{{fetchModels}}</button>
-    </div>
-    <div class="models-status" id="modelsStatus" aria-live="polite"></div>
-  </div>
-
-  <div class="field">
-    <label for="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{defaultHaikuModel}}</label>
-    <div class="model-field-row">
-      <input type="text" id="ANTHROPIC_DEFAULT_HAIKU_MODEL" value="{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}" />
-      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">
-        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
-        <div class="searchable-select-dropdown">
-          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
-          <div class="searchable-select-list"></div>
-          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">{{cardConnection}}</span><svg class="card-chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+    <div class="card-body">
+      <div class="field">
+        <div class="field-row">
+          <label for="ANTHROPIC_AUTH_TOKEN">{{authToken}}</label>
+          <div class="input-wrapper">
+            <input type="password" id="ANTHROPIC_AUTH_TOKEN" value="{{ANTHROPIC_AUTH_TOKEN}}" />
+            <button class="eye-toggle" id="toggleAuthToken" title="{{showHide}}">
+              <svg class="icon-eye" viewBox="0 0 24 24" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <svg class="icon-eye-off" viewBox="0 0 24 24" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.19a3 3 0 1 1-4.24-4.24" fill="none" stroke="currentColor" stroke-width="2"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </div>
+          <span class="action-col-spacer" aria-hidden="true"></span>
+          <span class="one-million-context-spacer" aria-hidden="true"></span>
         </div>
       </div>
-      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{modelSpeedTest}}</button>
-    </div>
-  </div>
 
-  <div class="field">
-    <label for="ANTHROPIC_DEFAULT_SONNET_MODEL">{{defaultSonnetModel}}</label>
-    <div class="model-field-row">
-      <input type="text" id="ANTHROPIC_DEFAULT_SONNET_MODEL" value="{{ANTHROPIC_DEFAULT_SONNET_MODEL}}" />
-      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">
-        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
-        <div class="searchable-select-dropdown">
-          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
-          <div class="searchable-select-list"></div>
-          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+      <div class="field">
+        <div class="field-row">
+          <label for="ANTHROPIC_BASE_URL">{{baseUrl}}</label>
+          <input type="text" id="ANTHROPIC_BASE_URL" value="{{ANTHROPIC_BASE_URL}}" />
+          <button class="btn-secondary" id="fetchModelsBtn">{{fetchModels}}</button>
+          <span class="one-million-context-spacer" aria-hidden="true"></span>
         </div>
+        <div class="models-status" id="modelsStatus" aria-live="polite"></div>
       </div>
-      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">{{modelSpeedTest}}</button>
-      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
     </div>
   </div>
 
-  <div class="field">
-    <label for="ANTHROPIC_DEFAULT_OPUS_MODEL">{{defaultOpusModel}}</label>
-    <div class="model-field-row">
-      <input type="text" id="ANTHROPIC_DEFAULT_OPUS_MODEL" value="{{ANTHROPIC_DEFAULT_OPUS_MODEL}}" />
-      <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">
-        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
-        <div class="searchable-select-dropdown">
-          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
-          <div class="searchable-select-list"></div>
-          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">{{cardModels}}</span><svg class="card-chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+    <div class="card-body">
+      <div class="field model-field">
+        <div class="model-field-row">
+          <label for="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{defaultHaikuModel}}</label>
+          <input type="text" id="ANTHROPIC_DEFAULT_HAIKU_MODEL" value="{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}" />
+          <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">
+            <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+            <div class="searchable-select-dropdown">
+              <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+              <div class="searchable-select-list"></div>
+              <div class="searchable-select-empty">{{noModelsFound}}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL">{{modelSpeedTest}}</button>
+          <span class="one-million-context-spacer" aria-hidden="true"></span>
         </div>
+        <div class="row-status" data-target="ANTHROPIC_DEFAULT_HAIKU_MODEL" aria-live="polite"></div>
       </div>
-      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">{{modelSpeedTest}}</button>
-      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
-    </div>
-  </div>
 
-  <div class="field">
-    <label for="ANTHROPIC_MODEL">{{fallbackModel}}</label>
-    <div class="model-field-row">
-      <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
-      <div class="searchable-select" data-target="ANTHROPIC_MODEL">
-        <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
-        <div class="searchable-select-dropdown">
-          <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
-          <div class="searchable-select-list"></div>
-          <div class="searchable-select-empty" style="display:none">{{noModelsFound}}</div>
+      <div class="field model-field">
+        <div class="model-field-row">
+          <label for="ANTHROPIC_DEFAULT_SONNET_MODEL">{{defaultSonnetModel}}</label>
+          <input type="text" id="ANTHROPIC_DEFAULT_SONNET_MODEL" value="{{ANTHROPIC_DEFAULT_SONNET_MODEL}}" />
+          <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">
+            <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+            <div class="searchable-select-dropdown">
+              <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+              <div class="searchable-select-list"></div>
+              <div class="searchable-select-empty">{{noModelsFound}}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL">{{modelSpeedTest}}</button>
+          <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
         </div>
+        <div class="row-status" data-target="ANTHROPIC_DEFAULT_SONNET_MODEL" aria-live="polite"></div>
       </div>
-      <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_MODEL">{{modelSpeedTest}}</button>
-      <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
+
+      <div class="field model-field">
+        <div class="model-field-row">
+          <label for="ANTHROPIC_DEFAULT_OPUS_MODEL">{{defaultOpusModel}}</label>
+          <input type="text" id="ANTHROPIC_DEFAULT_OPUS_MODEL" value="{{ANTHROPIC_DEFAULT_OPUS_MODEL}}" />
+          <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">
+            <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+            <div class="searchable-select-dropdown">
+              <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+              <div class="searchable-select-list"></div>
+              <div class="searchable-select-empty">{{noModelsFound}}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL">{{modelSpeedTest}}</button>
+          <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
+        </div>
+        <div class="row-status" data-target="ANTHROPIC_DEFAULT_OPUS_MODEL" aria-live="polite"></div>
+      </div>
+
+      <div class="field model-field">
+        <div class="model-field-row">
+          <label for="ANTHROPIC_MODEL">{{fallbackModel}}</label>
+          <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
+          <div class="searchable-select" data-target="ANTHROPIC_MODEL">
+            <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+            <div class="searchable-select-dropdown">
+              <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+              <div class="searchable-select-list"></div>
+              <div class="searchable-select-empty">{{noModelsFound}}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_MODEL">{{modelSpeedTest}}</button>
+          <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
+        </div>
+        <div class="row-status" data-target="ANTHROPIC_MODEL" aria-live="polite"></div>
+      </div>
     </div>
   </div>
 
-  <div class="section-title">{{extraEnvVars}}</div>
+  <div class="card" data-default-collapsed>
+    <div class="card-header"><span class="card-title">{{extraEnvVars}}</span><svg class="card-chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+    <div class="card-body">
+      <div class="extra-env-container" id="extraEnvContainer"></div>
+      <button type="button" class="btn-secondary" id="addExtraEnvBtn">{{addEnvVar}}</button>
+    </div>
+  </div>
 
-  <div class="extra-env-container" id="extraEnvContainer"></div>
-  <button type="button" class="btn-secondary" id="addExtraEnvBtn">{{addEnvVar}}</button>
-
-  <div class="field">
-    <label for="name">{{profileName}}</label>
-    <input type="text" id="name" value="{{name}}" />
-    <div class="field-hint">{{nameHint}}</div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">{{profileName}}</span><svg class="card-chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+    <div class="card-body">
+      <div class="field">
+        <input type="text" id="name" value="{{name}}" placeholder="{{nameHint}}" />
+      </div>
+    </div>
   </div>
 
   <div class="actions">
