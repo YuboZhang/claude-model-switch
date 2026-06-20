@@ -3,7 +3,7 @@
   "displayName": "Claude Model Switch",
   "description": "%extension.description%",
   "icon": "media/logo.png",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "publisher": "adams549659584",
   "license": "MIT",
   "repository": {
