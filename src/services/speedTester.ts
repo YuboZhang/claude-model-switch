@@ -71,7 +71,6 @@ export class SpeedTester {
       };
     }
 
-    // 1. 优先尝试流式测速
     try {
       const client = this.createClient(config, timeoutMs);
 
@@ -80,8 +79,8 @@ export class SpeedTester {
 
       const stream = await client.messages.create({
         model,
-        max_tokens: 15,
-        messages: [{ role: 'user', content: 'Reply ok.' }],
+        max_tokens: 128,
+        messages: [{ role: 'user', content: 'List the numbers from 1 to 50, one per line.' }],
         stream: true,
       });
 
@@ -115,49 +114,14 @@ export class SpeedTester {
         speedTokensPerSec,
         model,
       };
-    } catch (streamError) {
-      // 检查是否为超时错误。硬性超时错误不应该执行降级，直接返回失败，防止双倍超时耗时
-      const isTimeout = streamError instanceof Error && (
-        streamError.name === 'TimeoutError'
-        || streamError.name === 'AbortError'
-        || streamError.message.toLowerCase().includes('timeout')
-        || streamError.message.toLowerCase().includes('aborted')
-      );
-
-      if (isTimeout) {
-        return {
-          profile,
-          status: 'error',
-          durationMs: Date.now() - startedAt,
-          model,
-          error: this.formatError(streamError),
-        };
-      }
-
-      // 2. 优雅降级：仅对非超时的其它错误（如接口不支持流式的 400/405 等）回退为非流式的单 Token 请求
-      try {
-        const client = this.createClient(config, timeoutMs);
-        const response = await client.messages.create({
-          model,
-          max_tokens: 1,
-          messages: [{ role: 'user', content: 'Reply ok.' }],
-        });
-
-        return {
-          profile,
-          status: 'success',
-          durationMs: Date.now() - startedAt,
-          model: response.model,
-        };
-      } catch (fallbackError) {
-        return {
-          profile,
-          status: 'error',
-          durationMs: Date.now() - startedAt,
-          model,
-          error: this.formatError(fallbackError),
-        };
-      }
+    } catch (err) {
+      return {
+        profile,
+        status: 'error',
+        durationMs: Date.now() - startedAt,
+        model,
+        error: this.formatError(err),
+      };
     }
   }
 
