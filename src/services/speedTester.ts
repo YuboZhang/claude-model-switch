@@ -11,6 +11,8 @@ export interface SpeedTestResult {
   profile: Profile;
   status: SpeedTestStatus;
   durationMs: number;
+  firstTokenMs?: number;
+  speedTokensPerSec?: number;
   model?: string;
   error?: string;
 }
@@ -71,26 +73,54 @@ export class SpeedTester {
 
     try {
       const client = this.createClient(config, timeoutMs);
-      const response = await client.messages.create({
+
+      let firstTokenAt = 0;
+      let outputTokens = 0;
+
+      const stream = await client.messages.create({
         model,
-        max_tokens: 1024,
-        thinking: { type: 'enabled', budget_tokens: 512 },
-        messages: [{ role: 'user', content: 'Reply ok.' }],
+        max_tokens: 128,
+        messages: [{ role: 'user', content: 'List the numbers from 1 to 50, one per line.' }],
+        stream: true,
       });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta') {
+          if (!firstTokenAt) {
+            firstTokenAt = Date.now();
+          }
+        }
+        if (event.type === 'message_delta') {
+          if (event.usage && event.usage.output_tokens) {
+            outputTokens = event.usage.output_tokens;
+          }
+        }
+      }
+
+      const endedAt = Date.now();
+      const firstTokenMs = firstTokenAt ? (firstTokenAt - startedAt) : undefined;
+      const durationMs = endedAt - startedAt;
+
+      const generationDurationMs = endedAt - (firstTokenAt || startedAt);
+      const speedTokensPerSec = generationDurationMs > 0 && outputTokens > 1
+        ? Number(((outputTokens - 1) / (generationDurationMs / 1000)).toFixed(1))
+        : undefined;
 
       return {
         profile,
         status: 'success',
-        durationMs: Date.now() - startedAt,
-        model: response.model,
+        durationMs,
+        firstTokenMs,
+        speedTokensPerSec,
+        model,
       };
-    } catch (error) {
+    } catch (err) {
       return {
         profile,
         status: 'error',
         durationMs: Date.now() - startedAt,
         model,
-        error: this.formatError(error),
+        error: this.formatError(err),
       };
     }
   }

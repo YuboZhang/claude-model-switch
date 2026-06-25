@@ -9,16 +9,75 @@
   --btn-hover: var(--vscode-button-hoverBackground);
   --label-fg: var(--vscode-editor-foreground);
   --border: var(--vscode-panel-border);
+  --success-fg: var(--vscode-testing-iconPassed);
+  --error-fg: var(--vscode-errorForeground);
+  --radius: 6px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* 统一左标签列宽：连接区/模型区/额外变量区共用，保证各组输入框左边界对齐 */
+  --label-col: 64px;
+  /* 统一次级列宽（模型下拉 / 额外变量值）：保证下拉与值框成列对齐 */
+  --select-col: 190px;
+  /* 统一次级按钮列宽（获取 / 测速 / 移除）：固定宽度，使各组输入框右边界与下拉成列对齐 */
+  --action-col: 72px;
 }
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--vscode-font-family);
-  padding: 20px 30px;
-  max-width: 600px;
+  padding: 16px 20px;
+  max-width: 680px;
 }
-h2 { margin-bottom: 20px; }
-.field { margin-bottom: 16px; }
+
+/* 卡片分组（不裁切：让可搜索下拉框能溢出卡片边界显示） */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-fg);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: pointer;
+  user-select: none;
+  background: var(--vscode-sideBar-background, color-mix(in srgb, var(--bg) 97%, var(--fg) 3%));
+  transition: background-color 0.15s ease;
+}
+.card-header:hover {
+  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 93%, var(--fg) 7%));
+}
+.card-chevron {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: transform .15s ease;
+}
+.card.collapsed .card-chevron {
+  transform: rotate(-90deg);
+}
+.card.collapsed .card-header {
+  border-bottom: none;
+}
+.card.collapsed .card-body {
+  display: none;
+}
+.card-body {
+  padding: 10px;
+}
+.card-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.field {
+  margin-bottom: 8px;
+}
 .field label {
   display: block;
   color: var(--label-fg);
@@ -31,21 +90,22 @@ h2 { margin-bottom: 20px; }
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
 }
 .field input:focus,
 .field select:focus {
-  outline: 1px solid var(--btn-bg);
+  outline: 1px solid var(--vscode-focusBorder, var(--btn-bg));
+  outline-offset: -1px;
 }
 .field select {
   padding: 6px 8px;
   background: var(--input-bg);
   color: var(--input-fg);
   border: 1px solid var(--input-border);
-  border-radius: 2px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
@@ -59,26 +119,34 @@ h2 { margin-bottom: 20px; }
   opacity: 0.6;
   margin-top: 2px;
 }
-.input-row,
+.field-row,
 .model-field-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.model-field-row {
-  position: relative;
-}
-.input-row input,
-.model-field-row input {
+.field-row > input,
+.field-row > .input-wrapper,
+.model-field-row > input {
   flex: 1;
   min-width: 0;
 }
-.input-row .btn-secondary {
+/* 统一左标签列：各组输入框左边界对齐（仅首个标签，排除行内的 1M 开关 label） */
+.field-row > label:first-child,
+.model-field-row > label:first-child {
+  flex: 0 0 var(--label-col);
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.field-row > .btn-secondary {
   flex: 0 0 auto;
 }
 .model-field-row select {
-  flex: 0 0 190px;
-  max-width: 38%;
+  flex: 0 0 var(--select-col);
 }
 .model-speed-test-btn {
   display: inline-flex;
@@ -86,7 +154,6 @@ h2 { margin-bottom: 20px; }
   justify-content: center;
   gap: 6px;
   flex: 0 0 auto;
-  min-width: 96px;
   white-space: nowrap;
 }
 .model-speed-test-btn.loading::before {
@@ -102,45 +169,118 @@ h2 { margin-bottom: 20px; }
 .model-speed-test-btn:disabled {
   cursor: wait;
 }
-.field .one-million-context-toggle {
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
+
+/* 1M 开关：行内就近（移入 .model-field-row 末尾，固定宽度，保证各模型行输入框对齐） */
+.one-million-context-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 58px;
   margin: 0;
+  font-size: 12px;
+  color: var(--label-fg);
+  cursor: pointer;
   white-space: nowrap;
 }
-.field .one-million-context-toggle input {
+/* 无 1M 开关的行（Haiku）用等宽占位，让模型输入框右边界与有开关的行对齐 */
+.one-million-context-spacer {
+  flex: 0 0 58px;
+  margin: 0;
+}
+/* 占位掉次级按钮列：令牌行无获取/测速按钮，用它让令牌输入框右边界与基础 URL 输入框一致 */
+.action-col-spacer {
+  flex: 0 0 var(--action-col);
+  margin: 0;
+}
+.one-million-context-toggle input {
   width: auto;
   margin: 0;
 }
+
+/* 获取模型列表状态（顶部 #modelsStatus） */
 .models-status {
-  min-height: 16px;
-  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 11px;
-  color: var(--label-fg);
-  opacity: 0.75;
+  color: var(--fg);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  margin-left: calc(var(--label-col) + 8px);
 }
 .models-status.success {
-  color: var(--vscode-testing-iconPassed);
+  background-color: color-mix(in srgb, var(--success-fg) 12%, transparent);
+  color: var(--success-fg);
+  border-color: color-mix(in srgb, var(--success-fg) 25%, transparent);
   opacity: 1;
 }
 .models-status.error {
-  color: var(--vscode-errorForeground);
+  background-color: color-mix(in srgb, var(--error-fg) 12%, transparent);
+  color: var(--error-fg);
+  border-color: color-mix(in srgb, var(--error-fg) 25%, transparent);
   opacity: 1;
 }
+.models-status.loading {
+  background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  opacity: 0.85;
+}
+
+/* 单行测速结果就近 */
+.row-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--fg);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+.row-status.success {
+  background-color: color-mix(in srgb, var(--success-fg) 12%, transparent);
+  color: var(--success-fg);
+  border-color: color-mix(in srgb, var(--success-fg) 25%, transparent);
+  opacity: 1;
+}
+.row-status.error {
+  background-color: color-mix(in srgb, var(--error-fg) 12%, transparent);
+  color: var(--error-fg);
+  border-color: color-mix(in srgb, var(--error-fg) 25%, transparent);
+  opacity: 1;
+}
+.row-status.loading {
+  background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  opacity: 0.85;
+}
+/* 测速结果左侧缩进对齐，使之与输入框左侧对齐 */
+.model-field .row-status {
+  margin-left: calc(var(--label-col) + 8px);
+}
+/* 未测速/未获取时不预留空间，避免空状态行白占纵向空间 */
+.row-status:empty,
+.models-status:empty {
+  display: none;
+}
+
 .btn-secondary {
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 6px 8px;
   cursor: pointer;
   font-size: 13px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   white-space: nowrap;
+  min-width: 80px;
 }
 .btn-secondary:hover:not(:disabled) {
   background: var(--btn-hover);
@@ -180,29 +320,35 @@ h2 { margin-bottom: 20px; }
 .eye-toggle.showing .icon-eye-off { display: block; }
 .actions {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 20px;
+  padding-bottom: 24px;
 }
 .btn-primary {
   background: var(--btn-bg);
   color: var(--btn-fg);
   border: none;
-  padding: 8px 20px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 2px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  min-width: 80px;
 }
 .btn-primary:hover { background: var(--btn-hover); }
 .btn-cancel {
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border);
-  padding: 8px 20px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 2px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  min-width: 80px;
 }
 .btn-cancel:hover { opacity: 0.8; }
+
+/* 兼容旧 section 标题写法（卡片化后 HTML 改用 .card-header） */
 .section-title {
   font-size: 14px;
   font-weight: 600;
@@ -210,4 +356,254 @@ h2 { margin-bottom: 20px; }
   margin-bottom: 12px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
+}
+
+/* Searchable Select */
+.searchable-select {
+  position: relative;
+  flex: 0 0 var(--select-col);
+}
+.searchable-select::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--vscode-descriptionForeground, var(--fg));
+  opacity: 0.7;
+  pointer-events: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.searchable-select.open::after {
+  transform: translateY(-50%) rotate(180deg);
+  opacity: 1;
+}
+.searchable-select-input {
+  width: 100%;
+  padding: 6px 28px 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.searchable-select-input:hover {
+  background-color: color-mix(in srgb, var(--input-bg) 88%, var(--btn-bg) 6%);
+}
+.searchable-select-input:focus,
+.searchable-select.open .searchable-select-input {
+  outline: none;
+  border-color: var(--vscode-focusBorder, var(--btn-bg));
+}
+
+/* 下拉：默认隐藏不占位不拦截，靠 opacity/visibility/transform 做动画 */
+.searchable-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--vscode-widget-shadow, 0 4px 12px rgba(0, 0, 0, 0.25));
+  z-index: 1000;
+  max-height: 220px;
+  overflow: hidden;
+  flex-direction: column;
+  /* 关闭态：不占位、不拦截、透明 */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+}
+.searchable-select.open .searchable-select-dropdown {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  display: flex;
+}
+.searchable-select-search {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  outline: none;
+  transition: box-shadow .12s ease, border-bottom-color .12s ease;
+}
+.searchable-select-search:focus {
+  border-bottom-color: var(--btn-bg);
+  box-shadow: 0 2px 0 -1px color-mix(in srgb, var(--btn-bg) 35%, transparent);
+}
+.searchable-select-search::placeholder {
+  color: var(--input-fg);
+  opacity: 0.5;
+}
+.searchable-select-list {
+  overflow-y: auto;
+  max-height: 150px;
+  flex: 1 1 auto;
+}
+.searchable-select-list::-webkit-scrollbar {
+  width: 6px;
+}
+.searchable-select-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.searchable-select-list::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+  border-radius: 3px;
+}
+.searchable-select-list::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7));
+}
+.searchable-select-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  transition: background-color .12s ease, color .12s ease;
+}
+.searchable-select-item:hover,
+.searchable-select-item.highlighted {
+  background: var(--vscode-list-hoverBackground);
+  color: var(--vscode-list-hoverForeground, var(--fg));
+}
+.searchable-select-item.selected {
+  background: color-mix(in srgb, var(--btn-bg) 12%, transparent);
+  color: var(--input-fg);
+}
+.searchable-select-item .item-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.searchable-select-item.selected .item-text {
+  padding-right: 18px;
+}
+.searchable-select-item.selected::after {
+  content: '✓';
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--btn-bg);
+}
+.searchable-select-empty {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* Extra Environment Variables */
+.extra-env-container {
+  margin-bottom: 8px;
+}
+#addExtraEnvBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin-right: calc(58px + 8px); /* 与变量行的右侧 1M 占位保持像素级对齐 */
+  box-sizing: border-box;
+  border: 1px dashed var(--vscode-panel-border, var(--border));
+  background: transparent;
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+#addExtraEnvBtn:hover {
+  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 95%, var(--fg) 5%));
+  border-color: var(--vscode-focusBorder, var(--btn-bg));
+  color: var(--vscode-button-hoverBackground, var(--fg));
+}
+.extra-env-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+  /* key 自身即变量名（充当标签），从左边缘起；右侧预留 1M 列，使 value/移除 与模型行 下拉/测速 成列对齐 */
+  padding-right: calc(58px + 8px);
+}
+.extra-env-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.extra-env-row .extra-env-key {
+  flex: 1;
+}
+.extra-env-row .extra-env-value {
+  flex: 0 0 var(--select-col);
+}
+.extra-env-row input:focus {
+  outline: none;
+  border-color: var(--btn-bg);
+}
+.extra-env-row .btn-remove-env {
+  flex: 0 0 auto;
+  min-width: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.extra-env-row .btn-remove-env:hover {
+  background: var(--vscode-statusBarItem-errorBackground, #c72e2e);
+  color: var(--vscode-statusBarItem-errorForeground, #ffffff);
+  border-color: transparent;
+}
+
+/* 次级按钮统一固定列宽：获取 / 测速 / 移除 同宽同列，
+   使基础 URL 输入框右边界、模型下拉、额外变量值框三者成列对齐。
+   置于文件末尾以覆盖 .btn-secondary / .btn-remove-env 的 min-width。 */
+#fetchModelsBtn,
+.model-speed-test-btn,
+.extra-env-row .btn-remove-env {
+  flex: 0 0 var(--action-col);
+  width: var(--action-col);
+  min-width: 0;
 }

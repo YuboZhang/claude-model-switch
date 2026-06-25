@@ -12,6 +12,8 @@ type SelectionMode = 'none' | 'speedTest' | 'deleteProfiles';
 interface ProfileSpeedResult {
   status: SpeedResultStatus;
   durationMs: number;
+  firstTokenMs?: number;
+  speedTokensPerSec?: number;
   error?: string;
 }
 
@@ -241,7 +243,14 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
   private buildDescription(profile: Profile, speedResult?: ProfileSpeedResult): string {
     const parts = [this.getDisplayModel(profile)];
     if (speedResult) {
-      parts.push(speedResult.status === 'success' ? `${speedResult.durationMs}ms` : l10n('treeSpeedFailed'));
+      if (speedResult.status === 'success') {
+        const speedText = speedResult.speedTokensPerSec !== undefined
+          ? `${speedResult.speedTokensPerSec} t/s`
+          : `${speedResult.durationMs}ms`;
+        parts.push(speedText);
+      } else {
+        parts.push(l10n('treeSpeedFailed'));
+      }
     }
     return parts.filter(Boolean).join(' · ');
   }
@@ -290,7 +299,11 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     if (speedResult) {
       lines.push('');
       if (speedResult.status === 'success') {
-        lines.push(l10n('treeSpeed', speedResult.durationMs));
+        if (speedResult.firstTokenMs !== undefined && speedResult.speedTokensPerSec !== undefined) {
+          lines.push(l10n('treeSpeedDetailTooltip', speedResult.firstTokenMs, speedResult.durationMs, speedResult.speedTokensPerSec));
+        } else {
+          lines.push(l10n('treeSpeed', speedResult.durationMs));
+        }
       } else {
         lines.push(l10n('treeSpeedFailedDetail', speedResult.error ?? l10n('unknownError')));
       }
