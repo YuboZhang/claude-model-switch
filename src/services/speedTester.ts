@@ -79,7 +79,8 @@ export class SpeedTester {
 
       const stream = await client.messages.create({
         model,
-        max_tokens: 128,
+        max_tokens: 256,
+        thinking: { type: 'enabled', budget_tokens: 128 },
         messages: [{ role: 'user', content: 'List the numbers from 1 to 50, one per line.' }],
         stream: true,
       });
