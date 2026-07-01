@@ -79,6 +79,14 @@ export class SettingsWriter {
       for (const key of Object.keys(this.buildEffectiveEnv(previousProfile))) {
         delete env[key];
       }
+      if (previousProfile.extraSettings && typeof previousProfile.extraSettings === 'object' && 'env' in previousProfile.extraSettings) {
+        const prevExtraEnv = (previousProfile.extraSettings as any).env;
+        if (prevExtraEnv && typeof prevExtraEnv === 'object') {
+          for (const key of Object.keys(prevExtraEnv)) {
+            delete env[key];
+          }
+        }
+      }
     }
 
     const effectiveEnv = this.buildEffectiveEnv(profile);
@@ -90,10 +98,17 @@ export class SettingsWriter {
         delete env[key];
       }
     }
-    // Extra env vars from the new profile (keys not in ENV_KEYS).
-    for (const [key, value] of Object.entries(effectiveEnv)) {
-      if (!ENV_KEYS.includes(key as keyof ProfileEnv)) {
-        env[key] = value;
+    // Extra env vars from the new profile (from extraSettings.env).
+    if (profile.extraSettings && typeof profile.extraSettings === 'object' && 'env' in profile.extraSettings) {
+      const extraEnv = (profile.extraSettings as any).env;
+      if (extraEnv && typeof extraEnv === 'object') {
+        for (const [key, value] of Object.entries(extraEnv)) {
+          if (value !== undefined && value !== null && value !== '') {
+            env[key] = String(value);
+          } else {
+            delete env[key];
+          }
+        }
       }
     }
 
@@ -101,6 +116,19 @@ export class SettingsWriter {
       delete settings['env'];
     } else {
       settings['env'] = env;
+    }
+
+    // 额外其他配置（与 env 平级的顶层 key）：先删上一个 profile 写过的，
+    // 再整键写入新 profile 的，实现切换清空。
+    if (previousProfile) {
+      for (const key of this.getExtraSettingsKeys(previousProfile)) {
+        delete settings[key];
+      }
+    }
+    if (profile.extraSettings) {
+      for (const key of this.getExtraSettingsKeys(profile)) {
+        settings[key] = (profile.extraSettings as Record<string, unknown>)[key];
+      }
     }
 
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
@@ -128,6 +156,16 @@ export class SettingsWriter {
       }
     }
     return result;
+  }
+
+  /**
+   * 返回某 profile 管理的「额外其他配置」顶层 key 集合（过滤保留字 env/model，
+   * 避免与专用区域冲突）。这些 key 与 env 平级，直接写入 settings 根对象。
+   */
+  private getExtraSettingsKeys(profile: Profile): string[] {
+    const extra = profile.extraSettings;
+    if (!extra || typeof extra !== 'object') return [];
+    return Object.keys(extra).filter(key => key !== 'env' && key !== 'model');
   }
 
   getActiveProfileId(): string | undefined {
@@ -201,6 +239,14 @@ export class SettingsWriter {
       for (const key of Object.keys(this.buildEffectiveEnv(activeProfile))) {
         keysToClear.add(key);
       }
+      if (activeProfile.extraSettings && typeof activeProfile.extraSettings === 'object' && 'env' in activeProfile.extraSettings) {
+        const extraEnv = (activeProfile.extraSettings as any).env;
+        if (extraEnv && typeof extraEnv === 'object') {
+          for (const key of Object.keys(extraEnv)) {
+            keysToClear.add(key);
+          }
+        }
+      }
     }
 
     try {
@@ -213,6 +259,11 @@ export class SettingsWriter {
         }
         if (Object.keys(env).length === 0) {
           delete settings['env'];
+        }
+      }
+      if (activeProfile) {
+        for (const key of this.getExtraSettingsKeys(activeProfile)) {
+          delete settings[key];
         }
       }
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');

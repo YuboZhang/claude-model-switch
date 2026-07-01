@@ -63,15 +63,27 @@ export class SpeedTester {
   }
 
   async listModels(baseURL?: string, token?: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<string[]> {
-    const normalizedBaseURL = this.normalizeModelsBaseURL(baseURL);
+    const userSettings = this.readClaudeUserSettings();
+    const userEnv = userSettings?.env;
+
+    const effectiveToken = this.trimString(token)
+      || this.trimString(userEnv?.ANTHROPIC_AUTH_TOKEN)
+      || this.trimString(userEnv?.ANTHROPIC_API_KEY)
+      || undefined;
+
+    const effectiveBaseURL = this.trimString(baseURL)
+      || this.trimString(userEnv?.ANTHROPIC_BASE_URL)
+      || undefined;
+
+    const normalizedBaseURL = this.normalizeModelsBaseURL(effectiveBaseURL);
     if (!normalizedBaseURL) {
       throw new Error(l10n('webviewBaseUrlRequired'));
     }
 
     const client = this.createClient(
       {
-        token: this.trimString(token),
-        baseURL: normalizedBaseURL,
+        token: effectiveToken,
+        baseURL: effectiveBaseURL,
       },
       timeoutMs,
     );

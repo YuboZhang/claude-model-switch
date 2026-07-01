@@ -4,11 +4,62 @@ import { Profile } from '../models/profile';
 
 const STORAGE_KEY = 'claudeModelSwitchProfiles';
 
+const ENV_KEYS = [
+  'ANTHROPIC_AUTH_TOKEN',
+  'ANTHROPIC_BASE_URL',
+  'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+  'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME',
+  'ANTHROPIC_DEFAULT_SONNET_MODEL',
+  'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
+  'ANTHROPIC_MODEL',
+];
+
+function migrateProfile(profile: Profile): Profile {
+  let migrated = false;
+  const newEnv = { ...profile.env };
+  const extraSettings = profile.extraSettings ? { ...profile.extraSettings } : {};
+  const extraEnv = extraSettings.env && typeof extraSettings.env === 'object'
+    ? { ...extraSettings.env } as Record<string, string>
+    : {};
+
+  for (const [key, value] of Object.entries(profile.env)) {
+    if (!ENV_KEYS.includes(key) && value !== undefined) {
+      extraEnv[key] = value;
+      delete newEnv[key];
+      migrated = true;
+    }
+  }
+
+  if (migrated) {
+    extraSettings.env = extraEnv;
+    return {
+      ...profile,
+      env: newEnv,
+      extraSettings,
+    };
+  }
+  return profile;
+}
+
 export class ProfileStore {
   constructor(private context: vscode.ExtensionContext) {}
 
   getAll(): Profile[] {
-    return this.context.globalState.get<Profile[]>(STORAGE_KEY) ?? [];
+    const profiles = this.context.globalState.get<Profile[]>(STORAGE_KEY) ?? [];
+    let modified = false;
+    const migrated = profiles.map(p => {
+      const m = migrateProfile(p);
+      if (m !== p) {
+        modified = true;
+      }
+      return m;
+    });
+    if (modified) {
+      this.context.globalState.update(STORAGE_KEY, migrated);
+    }
+    return migrated;
   }
 
   getById(id: string): Profile | undefined {

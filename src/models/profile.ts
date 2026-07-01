@@ -15,6 +15,7 @@ export interface Profile {
   id: string;
   name: string;
   env: ProfileEnv;
+  extraSettings?: Record<string, unknown>;
 }
 
 export function createDefaultProfile(): Profile {

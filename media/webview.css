@@ -511,41 +511,27 @@ body {
   box-sizing: border-box;
 }
 
-/* Extra Environment Variables */
-.extra-env-container {
+
+
+/* Extra Settings (JSON tree) */
+.extra-settings-hint {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground, var(--label-fg));
   margin-bottom: 8px;
 }
-#addExtraEnvBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  margin-right: calc(58px + 8px); /* 与变量行的右侧 1M 占位保持像素级对齐 */
-  box-sizing: border-box;
-  border: 1px dashed var(--vscode-panel-border, var(--border));
-  background: transparent;
-  color: var(--vscode-descriptionForeground, var(--label-fg));
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+.extra-settings-tree {
+  margin-bottom: 8px;
 }
-#addExtraEnvBtn:hover {
-  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 95%, var(--fg) 5%));
-  border-color: var(--vscode-focusBorder, var(--btn-bg));
-  color: var(--vscode-button-hoverBackground, var(--fg));
+.es-entry {
+  margin-bottom: 6px;
 }
-.extra-env-row {
+.es-header {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 6px;
-  /* key 自身即变量名（充当标签），从左边缘起；右侧预留 1M 列，使 value/移除 与模型行 下拉/测速 成列对齐 */
-  padding-right: calc(58px + 8px);
 }
-.extra-env-row input {
-  flex: 1;
+.es-key {
+  flex: 0 0 30%;
   min-width: 0;
   padding: 6px 8px;
   background: var(--input-bg);
@@ -556,19 +542,84 @@ body {
   font-family: inherit;
   box-sizing: border-box;
 }
-.extra-env-row .extra-env-key {
+.es-index-badge {
+  flex: 0 0 30%;
+  min-width: 0;
+  padding: 6px 8px;
+  background: var(--vscode-editor-inactiveSelectionBackground, rgba(121, 121, 121, 0.15));
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  border: 1px solid var(--vscode-input-border, var(--border));
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  box-sizing: border-box;
+  text-align: center;
+  user-select: none;
+}
+.es-type {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.es-scalar {
   flex: 1;
+  min-width: 0;
 }
-.extra-env-row .extra-env-value {
-  flex: 0 0 var(--select-col);
+.es-input,
+.es-bool {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
 }
-.extra-env-row input:focus {
+.es-input:focus,
+.es-bool:focus,
+.es-key:focus {
   outline: none;
   border-color: var(--btn-bg);
 }
-.extra-env-row .btn-remove-env {
+.es-children {
+  border-left: 2px solid var(--vscode-focusBorder, var(--btn-bg));
+  padding: 6px 8px 6px 12px;
+  margin-top: 6px;
+  margin-left: 4px;
+  background: var(--vscode-keybindingTable-rowsBackground, rgba(121, 121, 121, 0.04));
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.es-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  border: 1px dashed var(--vscode-activityBar-activeBorder, var(--border));
+  background: transparent;
+  color: var(--vscode-activityBar-activeBorder, var(--fg));
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+.es-add:hover {
+  background: var(--vscode-list-hoverBackground, rgba(121, 121, 121, 0.1));
+  border-color: var(--vscode-focusBorder, var(--btn-bg));
+  color: var(--vscode-button-hoverBackground, var(--fg));
+}
+/* 移除按钮：与额外环境变量同款（透明描边 + 悬停红） */
+.es-header .btn-remove-env {
   flex: 0 0 auto;
-  min-width: 80px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -582,10 +633,88 @@ body {
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.extra-env-row .btn-remove-env:hover {
+.es-header .btn-remove-env:hover {
   background: var(--vscode-statusBarItem-errorBackground, #c72e2e);
   color: var(--vscode-statusBarItem-errorForeground, #ffffff);
   border-color: transparent;
+}
+
+/* Sub-section styling for tree/JSON within Extra Settings */
+.sub-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+.sub-section:last-child {
+  margin-bottom: 0;
+}
+.sub-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  background: var(--vscode-sideBar-background, color-mix(in srgb, var(--bg) 97%, var(--fg) 3%));
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background-color 0.15s ease;
+}
+.sub-section-header:hover {
+  background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--bg) 93%, var(--fg) 7%));
+}
+.sub-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--label-fg);
+}
+.sub-section-body {
+  padding: 8px 10px;
+}
+.sub-section.collapsed .sub-section-header {
+  border-bottom: none;
+}
+.sub-section.collapsed .sub-section-body {
+  display: none;
+}
+.sub-section.collapsed .card-chevron {
+  transform: rotate(-90deg);
+}
+
+.es-json-status {
+  font-size: 11px;
+  min-width: 0;
+  text-align: right;
+}
+.es-json-status.error {
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+.es-json-status.success {
+  color: var(--vscode-charts-green, #4caf50);
+}
+.es-json {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  white-space: pre;
+  tab-size: 2;
+}
+.es-json:focus {
+  outline: none;
+  border-color: var(--btn-bg);
 }
 
 /* 次级按钮统一固定列宽：获取 / 测速 / 移除 同宽同列，
@@ -593,8 +722,156 @@ body {
    置于文件末尾以覆盖 .btn-secondary / .btn-remove-env 的 min-width。 */
 #fetchModelsBtn,
 .model-speed-test-btn,
-.extra-env-row .btn-remove-env {
+.es-header .btn-remove-env {
   flex: 0 0 var(--action-col);
   width: var(--action-col);
   min-width: 0;
+}
+
+/* Fullscreen JSON Editor */
+.es-json-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  margin-right: 8px;
+}
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+.btn-icon:hover {
+  opacity: 1;
+  background: var(--vscode-list-hoverBackground, rgba(121, 121, 121, 0.1));
+}
+.icon-minimize {
+  display: none;
+}
+
+#esJsonSubSection.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  background: var(--bg);
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+#esJsonSubSection.fullscreen .sub-section-header {
+  border-radius: 0;
+  padding: 10px 16px;
+  flex: 0 0 auto;
+}
+#esJsonSubSection.fullscreen .sub-section-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+#esJsonSubSection.fullscreen .es-json {
+  flex: 1;
+  height: 100%;
+  resize: none;
+}
+#esJsonSubSection.fullscreen .icon-maximize {
+  display: none;
+}
+#esJsonSubSection.fullscreen .icon-minimize {
+  display: inline-block;
+}
+
+/* Quick Import Toolbar */
+.import-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.import-toolbar button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.import-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--fg);
+  border: 1px solid transparent;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.import-status:empty {
+  display: none;
+}
+.import-status.success {
+  background-color: var(--vscode-notifications-background, color-mix(in srgb, var(--vscode-charts-green, #4caf50) 10%, var(--bg)));
+  color: var(--vscode-charts-green, #4caf50);
+  border-color: color-mix(in srgb, var(--vscode-charts-green, #4caf50) 30%, transparent);
+}
+.import-status.error {
+  background-color: var(--vscode-notifications-errorBackground, color-mix(in srgb, var(--vscode-errorForeground, #f14c4c) 10%, var(--bg)));
+  color: var(--vscode-errorForeground, #f14c4c);
+  border-color: color-mix(in srgb, var(--vscode-errorForeground, #f14c4c) 30%, transparent);
+}
+.import-status.loading {
+  background-color: var(--vscode-list-hoverBackground, rgba(121, 121, 121, 0.1));
+  color: var(--vscode-descriptionForeground, var(--label-fg));
+  border-color: var(--vscode-panel-border, var(--border));
+}
+
+/* Collapsible Tree View Nodes */
+.es-toggle-chevron {
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+}
+.es-toggle-chevron:hover {
+  opacity: 1;
+  background: var(--vscode-list-hoverBackground, rgba(121, 121, 121, 0.1));
+}
+.es-toggle-chevron.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+.es-entry.collapsed > .es-children {
+  display: none;
+}
+.es-entry.collapsed > .es-header > .es-toggle-chevron {
+  transform: rotate(-90deg);
 }
