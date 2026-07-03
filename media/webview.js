@@ -8,11 +8,13 @@ const modelNameSourceIds = [
   'ANTHROPIC_DEFAULT_HAIKU_MODEL',
   'ANTHROPIC_DEFAULT_SONNET_MODEL',
   'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_FABLE_MODEL',
   'ANTHROPIC_MODEL',
 ];
 const oneMillionContextTargets = [
   'ANTHROPIC_DEFAULT_SONNET_MODEL',
   'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_FABLE_MODEL',
   'ANTHROPIC_MODEL',
 ];
 
@@ -491,6 +493,7 @@ document.getElementById('saveBtn').addEventListener('click', function() {
     ANTHROPIC_DEFAULT_HAIKU_MODEL: getModelValue('ANTHROPIC_DEFAULT_HAIKU_MODEL'),
     ANTHROPIC_DEFAULT_SONNET_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_SONNET_MODEL'),
     ANTHROPIC_DEFAULT_OPUS_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_OPUS_MODEL'),
+    ANTHROPIC_DEFAULT_FABLE_MODEL: getModelValueForSave('ANTHROPIC_DEFAULT_FABLE_MODEL'),
     ANTHROPIC_MODEL: getModelValueForSave('ANTHROPIC_MODEL'),
   };
 
@@ -580,6 +583,17 @@ window.addEventListener('message', function(event) {
         opusCheck.checked = opusParsed.supportsOneMillionContext;
       }
 
+      const fableParsed = parseOneMillionContextModel(config.env.ANTHROPIC_DEFAULT_FABLE_MODEL || '');
+      const fableInput = document.getElementById('ANTHROPIC_DEFAULT_FABLE_MODEL');
+      if (fableInput) {
+        fableInput.value = fableParsed.model;
+        syncSearchableSelectFromTarget('ANTHROPIC_DEFAULT_FABLE_MODEL');
+      }
+      const fableCheck = document.getElementById('ANTHROPIC_DEFAULT_FABLE_MODEL_ONE_MILLION_CONTEXT');
+      if (fableCheck) {
+        fableCheck.checked = fableParsed.supportsOneMillionContext;
+      }
+
       const fallbackParsed = parseOneMillionContextModel(config.env.ANTHROPIC_MODEL || '');
       const fallbackInput = document.getElementById('ANTHROPIC_MODEL');
       if (fallbackInput) {
@@ -651,7 +665,14 @@ for (const button of modelSpeedTestBtns) {
   button.addEventListener('click', function() {
     const targetId = this.dataset.target;
     const modelInput = document.getElementById(targetId);
-    const model = getModelValueFromInput(modelInput);
+    let model = getModelValueFromInput(modelInput);
+    
+    // 在配置页（Webview）测速时，直接读取对应的复选框状态
+    const isOneMillionContext = document.getElementById(`${targetId}_ONE_MILLION_CONTEXT`)?.checked;
+    if (isOneMillionContext && model && !model.endsWith('[1m]')) {
+      model = `${model.trim()}[1m]`;
+    }
+
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const statusEl = document.querySelector(`.row-status[data-target="${targetId}"]`);
     pendingModelSpeedTests.set(requestId, { button: this, model, statusEl });

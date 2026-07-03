@@ -161,6 +161,8 @@ export class WebviewPanel {
                 'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
                 'ANTHROPIC_DEFAULT_OPUS_MODEL',
                 'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
+                'ANTHROPIC_DEFAULT_FABLE_MODEL',
+                'ANTHROPIC_DEFAULT_FABLE_MODEL_NAME',
                 'ANTHROPIC_MODEL',
               ];
               
@@ -178,6 +180,9 @@ export class WebviewPanel {
               
               const opus = env.ANTHROPIC_DEFAULT_OPUS_MODEL || '';
               resolvedEnv.ANTHROPIC_DEFAULT_OPUS_MODEL = typeof opus === 'string' ? opus : '';
+              
+              const fable = env.ANTHROPIC_DEFAULT_FABLE_MODEL || '';
+              resolvedEnv.ANTHROPIC_DEFAULT_FABLE_MODEL = typeof fable === 'string' ? fable : '';
               
               const fallback = env.ANTHROPIC_MODEL || settings.model || '';
               resolvedEnv.ANTHROPIC_MODEL = typeof fallback === 'string' ? fallback : '';
@@ -271,6 +276,7 @@ export class WebviewPanel {
     const isEdit = this.options.mode === 'edit';
     const sonnetModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_DEFAULT_SONNET_MODEL ?? '');
     const opusModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_DEFAULT_OPUS_MODEL ?? '');
+    const fableModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_DEFAULT_FABLE_MODEL ?? '');
     const fallbackModel = parseOneMillionContextModel(profile?.env?.ANTHROPIC_MODEL ?? '');
 
     const mediaDir = path.join(extensionUri.fsPath, 'media');
@@ -307,6 +313,7 @@ export class WebviewPanel {
     html = html.replace('{{defaultHaikuModel}}', l10n('webviewDefaultHaikuModel'));
     html = html.replace('{{defaultSonnetModel}}', l10n('webviewDefaultSonnetModel'));
     html = html.replace('{{defaultOpusModel}}', l10n('webviewDefaultOpusModel'));
+    html = html.replace('{{defaultFableModel}}', l10n('webviewDefaultFableModel'));
     html = html.replace('{{fallbackModel}}', l10n('webviewFallbackModel'));
     html = html.replace(/\{\{oneMillionContext\}\}/g, l10n('webviewOneMillionContext'));
     html = html.replace('{{unnamed}}', escapeAttr(l10n('webviewUnnamed')));
@@ -316,6 +323,8 @@ export class WebviewPanel {
     html = html.replace('{{ANTHROPIC_DEFAULT_HAIKU_MODEL}}', escapeAttr(profile?.env?.ANTHROPIC_DEFAULT_HAIKU_MODEL ?? ''));
     html = html.replace('{{ANTHROPIC_DEFAULT_OPUS_MODEL}}', escapeAttr(opusModel.model));
     html = html.replace('{{ANTHROPIC_DEFAULT_OPUS_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', opusModel.supportsOneMillionContext ? 'checked' : '');
+    html = html.replace('{{ANTHROPIC_DEFAULT_FABLE_MODEL}}', escapeAttr(fableModel.model));
+    html = html.replace('{{ANTHROPIC_DEFAULT_FABLE_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', fableModel.supportsOneMillionContext ? 'checked' : '');
     html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL}}', escapeAttr(sonnetModel.model));
     html = html.replace('{{ANTHROPIC_DEFAULT_SONNET_MODEL_ONE_MILLION_CONTEXT_CHECKED}}', sonnetModel.supportsOneMillionContext ? 'checked' : '');
     html = html.replace('{{ANTHROPIC_MODEL}}', escapeAttr(fallbackModel.model));

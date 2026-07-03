@@ -17,6 +17,8 @@ const ENV_KEYS: (keyof ProfileEnv)[] = [
   'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
   'ANTHROPIC_DEFAULT_OPUS_MODEL',
   'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
+  'ANTHROPIC_DEFAULT_FABLE_MODEL',
+  'ANTHROPIC_DEFAULT_FABLE_MODEL_NAME',
   'ANTHROPIC_MODEL',
 ];
 
@@ -24,6 +26,7 @@ const DEFAULT_MODEL_NAME_PAIRS: Array<[keyof ProfileEnv, keyof ProfileEnv]> = [
   ['ANTHROPIC_DEFAULT_HAIKU_MODEL', 'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME'],
   ['ANTHROPIC_DEFAULT_SONNET_MODEL', 'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME'],
   ['ANTHROPIC_DEFAULT_OPUS_MODEL', 'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME'],
+  ['ANTHROPIC_DEFAULT_FABLE_MODEL', 'ANTHROPIC_DEFAULT_FABLE_MODEL_NAME'],
 ];
 
 export class SettingsWriter {
@@ -197,6 +200,7 @@ export class SettingsWriter {
         : undefined;
       return this.trimString(env?.ANTHROPIC_MODEL)
         || this.trimString(env?.ANTHROPIC_DEFAULT_OPUS_MODEL)
+        || this.trimString(env?.ANTHROPIC_DEFAULT_FABLE_MODEL)
         || this.trimString(env?.ANTHROPIC_DEFAULT_SONNET_MODEL)
         || this.trimString(env?.ANTHROPIC_DEFAULT_HAIKU_MODEL)
         || this.trimString(settings['model']);

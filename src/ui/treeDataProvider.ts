@@ -258,6 +258,7 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
   private getDisplayModel(profile: Profile): string {
     return profile.env.ANTHROPIC_MODEL
       || profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+      || profile.env.ANTHROPIC_DEFAULT_FABLE_MODEL
       || profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL
       || profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
       || '';
@@ -295,6 +296,7 @@ export class ProfileTreeDataProvider implements vscode.TreeDataProvider<ProfileI
     if (profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) lines.push(`Haiku: ${profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL}`);
     if (profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL) lines.push(`Sonnet: ${profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL}`);
     if (profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL) lines.push(`Opus: ${profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL}`);
+    if (profile.env.ANTHROPIC_DEFAULT_FABLE_MODEL) lines.push(`Fable: ${profile.env.ANTHROPIC_DEFAULT_FABLE_MODEL}`);
     if (profile.env.ANTHROPIC_MODEL) lines.push(`Anthropic: ${profile.env.ANTHROPIC_MODEL}`);
     if (speedResult) {
       lines.push('');

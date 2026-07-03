@@ -110,6 +110,24 @@
 
       <div class="field model-field">
         <div class="model-field-row">
+          <label for="ANTHROPIC_DEFAULT_FABLE_MODEL">{{defaultFableModel}}</label>
+          <input type="text" id="ANTHROPIC_DEFAULT_FABLE_MODEL" value="{{ANTHROPIC_DEFAULT_FABLE_MODEL}}" />
+          <div class="searchable-select" data-target="ANTHROPIC_DEFAULT_FABLE_MODEL">
+            <input type="text" class="searchable-select-input" placeholder="{{selectModelPlaceholder}}" readonly />
+            <div class="searchable-select-dropdown">
+              <input type="text" class="searchable-select-search" placeholder="{{searchModels}}" />
+              <div class="searchable-select-list"></div>
+              <div class="searchable-select-empty">{{noModelsFound}}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary model-speed-test-btn" data-target="ANTHROPIC_DEFAULT_FABLE_MODEL">{{modelSpeedTest}}</button>
+          <label class="one-million-context-toggle"><input type="checkbox" id="ANTHROPIC_DEFAULT_FABLE_MODEL_ONE_MILLION_CONTEXT" {{ANTHROPIC_DEFAULT_FABLE_MODEL_ONE_MILLION_CONTEXT_CHECKED}} /> {{oneMillionContext}}</label>
+        </div>
+        <div class="row-status" data-target="ANTHROPIC_DEFAULT_FABLE_MODEL" aria-live="polite"></div>
+      </div>
+
+      <div class="field model-field">
+        <div class="model-field-row">
           <label for="ANTHROPIC_MODEL">{{fallbackModel}}</label>
           <input type="text" id="ANTHROPIC_MODEL" value="{{ANTHROPIC_MODEL}}" />
           <div class="searchable-select" data-target="ANTHROPIC_MODEL">

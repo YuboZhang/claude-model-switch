@@ -7,6 +7,8 @@ export interface ProfileEnv {
   ANTHROPIC_DEFAULT_SONNET_MODEL_NAME?: string;
   ANTHROPIC_DEFAULT_OPUS_MODEL?: string;
   ANTHROPIC_DEFAULT_OPUS_MODEL_NAME?: string;
+  ANTHROPIC_DEFAULT_FABLE_MODEL?: string;
+  ANTHROPIC_DEFAULT_FABLE_MODEL_NAME?: string;
   ANTHROPIC_MODEL?: string;
   [key: string]: string | undefined;
 }
