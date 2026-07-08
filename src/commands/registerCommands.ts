@@ -273,6 +273,7 @@ export function registerCommands(
 function getDisplayModel(profile: Profile): string {
   return profile.env.ANTHROPIC_MODEL
     || profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL
+    || profile.env.ANTHROPIC_DEFAULT_FABLE_MODEL
     || profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL
     || profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
     || '';

@@ -30,19 +30,69 @@ interface ResolvedSpeedConfig {
   model?: string;
   token?: string;
   baseURL?: string;
+  hasOneMillionContext?: boolean;
 }
 
 export class SpeedTester {
-  async listModels(baseURL?: string, token?: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<string[]> {
-    const normalizedBaseURL = this.normalizeModelsBaseURL(baseURL);
+  /**
+   * 生成随机测速提示，避免请求模式过于固定被封禁
+   */
+  private generateRandomPrompt(): string {
+    // 多种问题模板
+    const templates: ((n: number) => string)[] = [
+      (n: number) => `List the numbers from 1 to ${n}, one per line.`,
+      (n: number) => `Count from 1 to ${n}, each number on a new line.`,
+      (n: number) => `Please output numbers 1 through ${n}, line by line.`,
+      (n: number) => `Write numbers from 1 up to ${n}, one per line.`,
+      (n: number) => `Enumerate numbers 1 to ${n}, each on its own line.`,
+      // 字母表类
+      (n: number) =>
+        `List the first ${n} letters of the alphabet, one per line.`,
+      (n: number) =>
+        `Write letters A through ${String.fromCharCode(64 + n)}, one per line.`,
+      // 简单任务类
+      (n: number) => `Say "hello world" ${n} times, each on a new line.`,
+      (n: number) => `Print the word "hello world" ${n} times, one per line.`,
+      (n: number) => `List ${n} common colors, one per line.`,
+      (n: number) => `Name ${n} fruits, one per line.`,
+    ];
+
+    // 随机选择模板和参数
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    // 随机生成参数：字母类用 10-26，数字类用 20-50
+    const randomNum = Math.floor(Math.random() * 31) + 20; // 20-50
+
+    return template(randomNum);
+  }
+
+  async listModels(
+    baseURL?: string,
+    token?: string,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  ): Promise<string[]> {
+    const userSettings = this.readClaudeUserSettings();
+    const userEnv = userSettings?.env;
+
+    const effectiveToken =
+      this.trimString(token) ||
+      this.trimString(userEnv?.ANTHROPIC_AUTH_TOKEN) ||
+      this.trimString(userEnv?.ANTHROPIC_API_KEY) ||
+      undefined;
+
+    const effectiveBaseURL =
+      this.trimString(baseURL) ||
+      this.trimString(userEnv?.ANTHROPIC_BASE_URL) ||
+      undefined;
+
+    const normalizedBaseURL = this.normalizeModelsBaseURL(effectiveBaseURL);
     if (!normalizedBaseURL) {
       throw new Error(l10n('webviewBaseUrlRequired'));
     }
 
     const client = this.createClient(
       {
-        token: this.trimString(token),
-        baseURL: normalizedBaseURL,
+        token: effectiveToken,
+        baseURL: effectiveBaseURL,
       },
       timeoutMs,
     );
@@ -57,7 +107,10 @@ export class SpeedTester {
     return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
   }
 
-  async testProfile(profile: Profile, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<SpeedTestResult> {
+  async testProfile(
+    profile: Profile,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  ): Promise<SpeedTestResult> {
     const startedAt = Date.now();
     const config = this.resolveConfig(profile);
     const model = config.model;
@@ -79,9 +132,9 @@ export class SpeedTester {
 
       const stream = await client.messages.create({
         model,
-        max_tokens: 256,
+        max_tokens: config.hasOneMillionContext ? 1100 : 256,
         thinking: { type: 'enabled', budget_tokens: 128 },
-        messages: [{ role: 'user', content: 'List the numbers from 1 to 50, one per line.' }],
+        messages: [{ role: 'user', content: this.generateRandomPrompt() }],
         stream: true,
       });
 
@@ -99,13 +152,16 @@ export class SpeedTester {
       }
 
       const endedAt = Date.now();
-      const firstTokenMs = firstTokenAt ? (firstTokenAt - startedAt) : undefined;
+      const firstTokenMs = firstTokenAt ? firstTokenAt - startedAt : undefined;
       const durationMs = endedAt - startedAt;
 
       const generationDurationMs = endedAt - (firstTokenAt || startedAt);
-      const speedTokensPerSec = generationDurationMs > 0 && outputTokens > 1
-        ? Number(((outputTokens - 1) / (generationDurationMs / 1000)).toFixed(1))
-        : undefined;
+      const speedTokensPerSec =
+        generationDurationMs > 0 && outputTokens > 1
+          ? Number(
+              ((outputTokens - 1) / (generationDurationMs / 1000)).toFixed(1),
+            )
+          : undefined;
 
       return {
         profile,
@@ -128,7 +184,11 @@ export class SpeedTester {
 
   async testProfiles(
     profiles: Profile[],
-    onResult: (result: SpeedTestResult, completed: number, total: number) => void,
+    onResult: (
+      result: SpeedTestResult,
+      completed: number,
+      total: number,
+    ) => void,
     concurrency = DEFAULT_CONCURRENCY,
   ): Promise<SpeedTestResult[]> {
     const results: SpeedTestResult[] = [];
@@ -155,40 +215,68 @@ export class SpeedTester {
   private resolveConfig(profile: Profile): ResolvedSpeedConfig {
     const userSettings = this.readClaudeUserSettings();
     const userEnv = userSettings?.env;
-    const token = this.trimString(profile.env.ANTHROPIC_AUTH_TOKEN)
-      || this.trimString(userEnv?.ANTHROPIC_AUTH_TOKEN)
-      || this.trimString(userEnv?.ANTHROPIC_API_KEY)
-      || undefined;
+    const token =
+      this.trimString(profile.env.ANTHROPIC_AUTH_TOKEN) ||
+      this.trimString(userEnv?.ANTHROPIC_AUTH_TOKEN) ||
+      this.trimString(userEnv?.ANTHROPIC_API_KEY) ||
+      undefined;
+
+    const rawModel =
+      this.trimString(profile.env.ANTHROPIC_MODEL) ||
+      this.trimString(profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL) ||
+      this.trimString(profile.env.ANTHROPIC_DEFAULT_FABLE_MODEL) ||
+      this.trimString(profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL) ||
+      this.trimString(profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) ||
+      undefined;
+
+    const hasOneMillionContext = rawModel?.endsWith('[1m]');
 
     return {
-      model: this.stripOneMillionContextSuffix(
-        this.trimString(profile.env.ANTHROPIC_MODEL)
-        || this.trimString(profile.env.ANTHROPIC_DEFAULT_OPUS_MODEL)
-        || this.trimString(profile.env.ANTHROPIC_DEFAULT_SONNET_MODEL)
-        || this.trimString(profile.env.ANTHROPIC_DEFAULT_HAIKU_MODEL)
-        || undefined,
-      ),
+      model: this.stripOneMillionContextSuffix(rawModel),
       token,
-      baseURL: this.trimString(profile.env.ANTHROPIC_BASE_URL)
-        || this.trimString(userEnv?.ANTHROPIC_BASE_URL)
-        || undefined,
+      baseURL:
+        this.trimString(profile.env.ANTHROPIC_BASE_URL) ||
+        this.trimString(userEnv?.ANTHROPIC_BASE_URL) ||
+        undefined,
+      hasOneMillionContext,
     };
   }
 
-  private createClient(config: ResolvedSpeedConfig, timeoutMs: number): Anthropic {
+  private createClient(
+    config: ResolvedSpeedConfig,
+    timeoutMs: number,
+  ): Anthropic {
     const baseURL = this.normalizeBaseURL(config.baseURL);
     const authOptions = this.resolveAuthOptions(config.token);
+
+    const defaultHeaders: Record<string, string | null> = config.token
+      ? {}
+      : { 'X-Api-Key': null, Authorization: null };
+    defaultHeaders['User-Agent'] =
+      'claude-cli/2.1.198 (external, claude-vscode, agent-sdk/0.3.198)';
+    defaultHeaders['X-App'] = 'cli';
+    // 如果启用了 1M 上下文，一些中转网站或 Claude Code 可能需要传递特定的 beta header 和模拟客户端标识
+    if (config.hasOneMillionContext) {
+      defaultHeaders['anthropic-beta'] =
+        'prompt-caching-2024-07-31,context-1m-2025-08-07';
+    }
 
     return new Anthropic({
       ...authOptions,
       baseURL,
       timeout: timeoutMs,
       maxRetries: 0,
-      defaultHeaders: config.token ? undefined : { 'X-Api-Key': null, Authorization: null },
+      defaultHeaders:
+        Object.keys(defaultHeaders).length > 0
+          ? (defaultHeaders as Record<string, string>)
+          : undefined,
     });
   }
 
-  private resolveAuthOptions(token?: string): { apiKey: string | null; authToken: string | null } {
+  private resolveAuthOptions(token?: string): {
+    apiKey: string | null;
+    authToken: string | null;
+  } {
     if (!token) return { apiKey: null, authToken: null };
     return token.startsWith('sk-ant-')
       ? { apiKey: token, authToken: null }
@@ -199,7 +287,9 @@ export class SpeedTester {
     if (!fs.existsSync(USER_SETTINGS_PATH)) return undefined;
 
     try {
-      const settings = JSON.parse(fs.readFileSync(USER_SETTINGS_PATH, 'utf-8')) as ClaudeUserSettings;
+      const settings = JSON.parse(
+        fs.readFileSync(USER_SETTINGS_PATH, 'utf-8'),
+      ) as ClaudeUserSettings;
       return settings && typeof settings === 'object' ? settings : undefined;
     } catch {
       return undefined;
@@ -242,7 +332,11 @@ export class SpeedTester {
       return l10n('speedRateLimited');
     }
     if (error instanceof Anthropic.APIError) {
-      return l10n('speedApiError', error.status ? ` ${error.status}` : '', error.message);
+      return l10n(
+        'speedApiError',
+        error.status ? ` ${error.status}` : '',
+        error.message,
+      );
     }
     if (error instanceof Error) {
       return error.message;
