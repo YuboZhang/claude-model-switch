@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isChinese, l10n } from '../i18n';
 import { Profile, generateId } from '../models/profile';
-import { ProfileStore } from '../storage/profileStore';
+import { normalizeProfile, ProfileStore } from '../storage/profileStore';
 import { SpeedTester } from '../services/speedTester';
 import { SettingsWriter } from '../storage/settingsWriter';
 import * as os from 'os';
@@ -35,7 +35,7 @@ export class WebviewPanel {
       async (msg) => {
         switch (msg.type) {
           case 'save': {
-            const profile: Profile = msg.profile;
+            const profile: Profile = normalizeProfile(msg.profile);
             if (this.options.mode === 'edit' && this.options.profile) {
               profile.id = this.options.profile.id;
               this.store.update(profile);

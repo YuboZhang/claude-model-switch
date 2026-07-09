@@ -18,31 +18,61 @@ const ENV_KEYS = [
   'ANTHROPIC_MODEL',
 ];
 
+function isNonEmptyEnvValue(value: unknown): boolean {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+/** 将 extraSettings.env 中的标准键提升到 profile.env，并把 env 中非标准键迁入 extra。 */
 function migrateProfile(profile: Profile): Profile {
   let migrated = false;
   const newEnv = { ...profile.env };
   const extraSettings = profile.extraSettings ? { ...profile.extraSettings } : {};
   const extraEnv = extraSettings.env && typeof extraSettings.env === 'object'
-    ? { ...extraSettings.env } as Record<string, string>
+    ? { ...extraSettings.env } as Record<string, unknown>
     : {};
 
-  for (const [key, value] of Object.entries(profile.env)) {
-    if (!ENV_KEYS.includes(key) && value !== undefined) {
+  for (const key of ENV_KEYS) {
+    if (!(key in extraEnv)) {
+      continue;
+    }
+    const extraVal = extraEnv[key];
+    const extraStr = extraVal === undefined || extraVal === null ? '' : String(extraVal).trim();
+    if (!isNonEmptyEnvValue(newEnv[key]) && extraStr !== '') {
+      newEnv[key] = extraStr;
+      migrated = true;
+    }
+    delete extraEnv[key];
+    migrated = true;
+  }
+
+  for (const [key, value] of Object.entries(newEnv)) {
+    if (!ENV_KEYS.includes(key) && value !== undefined && value !== '') {
       extraEnv[key] = value;
       delete newEnv[key];
       migrated = true;
     }
   }
 
-  if (migrated) {
-    extraSettings.env = extraEnv;
-    return {
-      ...profile,
-      env: newEnv,
-      extraSettings,
-    };
+  if (!migrated) {
+    return profile;
   }
-  return profile;
+
+  if (Object.keys(extraEnv).length > 0) {
+    extraSettings.env = extraEnv;
+  } else {
+    delete extraSettings.env;
+  }
+
+  const hasExtra = Object.keys(extraSettings).length > 0;
+  return {
+    ...profile,
+    env: newEnv,
+    extraSettings: hasExtra ? extraSettings : undefined,
+  };
+}
+
+export function normalizeProfile(profile: Profile): Profile {
+  return migrateProfile(profile);
 }
 
 export class ProfileStore {
@@ -70,7 +100,7 @@ export class ProfileStore {
 
   add(profile: Profile): void {
     const profiles = this.getAll();
-    profiles.push(profile);
+    profiles.push(migrateProfile(profile));
     this.context.globalState.update(STORAGE_KEY, profiles);
   }
 
@@ -78,7 +108,7 @@ export class ProfileStore {
     const profiles = this.getAll();
     const idx = profiles.findIndex(p => p.id === profile.id);
     if (idx >= 0) {
-      profiles[idx] = profile;
+      profiles[idx] = migrateProfile(profile);
       this.context.globalState.update(STORAGE_KEY, profiles);
     }
   }
@@ -111,17 +141,18 @@ export class ProfileStore {
     const result: Profile[] = [...existing];
 
     for (const profile of parsed) {
-      const conflictIdx = result.findIndex(p => p.name === profile.name);
+      const normalized = migrateProfile(profile);
+      const conflictIdx = result.findIndex(p => p.name === normalized.name);
       if (conflictIdx >= 0) {
-        const choice = await conflictHandler(profile.name);
+        const choice = await conflictHandler(normalized.name);
         if (choice === 'overwrite') {
-          result[conflictIdx] = profile;
+          result[conflictIdx] = normalized;
           imported++;
         } else {
           skipped++;
         }
       } else {
-        result.push(profile);
+        result.push(normalized);
         imported++;
       }
     }
