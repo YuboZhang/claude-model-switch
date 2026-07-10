@@ -59,7 +59,10 @@ export class WebviewPanel {
 
             try {
               const models = await this.speedTester.listModels(baseURL, token);
-              await this.panel.webview.postMessage({ type: 'modelsFetched', models });
+              await this.panel.webview.postMessage({
+                type: 'modelsFetched',
+                modelEntries: models,
+              });
             } catch (error) {
               await this.panel.webview.postMessage({
                 type: 'modelsFetchFailed',

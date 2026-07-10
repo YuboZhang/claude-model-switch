@@ -620,9 +620,15 @@ window.addEventListener('message', function(event) {
       break;
     }
     case 'modelsFetched': {
-      const models = Array.isArray(message.models) ? message.models : [];
-      populateModelSelects(models);
-      setStatus(formatTemplate(document.body.dataset.fetchSuccess || 'Fetched {0} models', models.length), 'success');
+      const modelEntries = normalizeModelEntries(message);
+      populateModelSelects(modelEntries);
+      setStatus(
+        formatTemplate(
+          document.body.dataset.fetchSuccess || 'Fetched {0} models',
+          modelEntries.length,
+        ),
+        'success',
+      );
       fetchModelsBtn.disabled = false;
       break;
     }
@@ -882,7 +888,39 @@ function formatOneMillionContextModel(value, supportsOneMillionContext) {
   return supportsOneMillionContext ? `${model}[1m]` : model;
 }
 
-function populateModelSelects(models) {
+function normalizeModelEntries(message) {
+  if (Array.isArray(message.modelEntries)) {
+    return message.modelEntries
+      .map(function(entry) {
+        const id = typeof entry?.id === 'string' ? entry.id.trim() : '';
+        if (!id) return null;
+        const displayName =
+          typeof entry.displayName === 'string' && entry.displayName.trim()
+            ? entry.displayName.trim()
+            : undefined;
+        return { id, displayName };
+      })
+      .filter(Boolean);
+  }
+  if (Array.isArray(message.models)) {
+    return message.models
+      .map(function(id) {
+        const trimmed = typeof id === 'string' ? id.trim() : '';
+        return trimmed ? { id: trimmed } : null;
+      })
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function formatModelEntryLabel(entry) {
+  if (entry.displayName && entry.displayName !== entry.id) {
+    return `${entry.displayName} — ${entry.id}`;
+  }
+  return entry.displayName || entry.id;
+}
+
+function populateModelSelects(modelEntries) {
   for (const select of searchableSelects) {
     const target = document.getElementById(select.dataset.target);
     const currentValue = getModelValueFromInput(target);
@@ -893,26 +931,29 @@ function populateModelSelects(models) {
 
     // Populate list
     list.innerHTML = '';
-    for (const model of models) {
+    for (const entry of modelEntries) {
       const item = document.createElement('div');
       item.className = 'searchable-select-item';
-      item.dataset.value = model;
+      item.dataset.value = entry.id;
+      item.dataset.searchText = `${entry.id} ${entry.displayName || ''}`.toLowerCase();
       const span = document.createElement('span');
       span.className = 'item-text';
-      span.textContent = model;
+      span.textContent = formatModelEntryLabel(entry);
       item.appendChild(span);
-      item.title = model;
-      if (model === currentValue) {
+      item.title = entry.id;
+      if (entry.id === currentValue) {
         item.classList.add('selected');
-        displayInput.value = model;
+        displayInput.value = entry.displayName && entry.displayName !== entry.id
+          ? entry.displayName
+          : entry.id;
       }
       item.addEventListener('click', function(e) {
         e.stopPropagation();
-        displayInput.value = this.dataset.value;
+        const label = span.textContent || this.dataset.value;
+        displayInput.value = label;
         target.value = this.dataset.value;
         target.dispatchEvent(new Event('input', { bubbles: true }));
         select.classList.remove('open');
-        // Update selected state
         list.querySelectorAll('.searchable-select-item').forEach(i => i.classList.remove('selected'));
         this.classList.add('selected');
       });
@@ -929,8 +970,8 @@ function populateModelSelects(models) {
       const query = this.value.toLowerCase();
       let hasVisible = false;
       list.querySelectorAll('.searchable-select-item').forEach(item => {
-        const text = item.querySelector('.item-text')?.textContent || item.dataset.value || '';
-        const match = text.toLowerCase().includes(query);
+        const text = item.dataset.searchText || item.dataset.value || '';
+        const match = text.includes(query);
         item.style.display = match ? '' : 'none';
         if (match) hasVisible = true;
       });

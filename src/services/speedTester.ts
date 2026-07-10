@@ -17,6 +17,12 @@ export interface SpeedTestResult {
   error?: string;
 }
 
+/** Models API 列表项（测速仍使用 id） */
+export interface ListedModel {
+  id: string;
+  displayName?: string;
+}
+
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_CONCURRENCY = 3;
 const USER_SETTINGS_PATH = path.join(os.homedir(), '.claude', 'settings.json');
@@ -69,7 +75,7 @@ export class SpeedTester {
     baseURL?: string,
     token?: string,
     timeoutMs = DEFAULT_TIMEOUT_MS,
-  ): Promise<string[]> {
+  ): Promise<ListedModel[]> {
     const userSettings = this.readClaudeUserSettings();
     const userEnv = userSettings?.env;
 
@@ -84,27 +90,18 @@ export class SpeedTester {
       this.trimString(userEnv?.ANTHROPIC_BASE_URL) ||
       undefined;
 
-    const normalizedBaseURL = this.normalizeModelsBaseURL(effectiveBaseURL);
-    if (!normalizedBaseURL) {
+    const origin = this.normalizeBaseURL(effectiveBaseURL);
+    if (!origin) {
       throw new Error(l10n('webviewBaseUrlRequired'));
     }
 
-    const client = this.createClient(
-      {
-        token: effectiveToken,
-        baseURL: effectiveBaseURL,
-      },
+    const modelsUrl = `${origin}/v1/models`;
+    const entries = await this.fetchOpenAICompatibleModelList(
+      modelsUrl,
+      effectiveToken,
       timeoutMs,
     );
-
-    const ids: string[] = [];
-    for await (const model of client.models.list()) {
-      if (typeof model.id === 'string' && model.id.trim()) {
-        ids.push(model.id.trim());
-      }
-    }
-
-    return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+    return this.dedupeAndSortListedModels(entries);
   }
 
   async testProfile(
@@ -295,6 +292,122 @@ export class SpeedTester {
     }
   }
 
+  /**
+   * OpenAI 兼容：GET {origin}/v1/models，解析 body.data[]。
+   * 不附带 Anthropic SDK 的 User-Agent / X-App，避免网关返回另一套模型列表。
+   */
+  private async fetchOpenAICompatibleModelList(
+    modelsUrl: string,
+    token: string | undefined,
+    timeoutMs: number,
+  ): Promise<ListedModel[]> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (token) {
+      if (token.startsWith('sk-ant-')) {
+        headers['x-api-key'] = token;
+        headers['anthropic-version'] = '2023-06-01';
+      } else {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    const response = await fetch(modelsUrl, {
+      method: 'GET',
+      headers,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    const text = await response.text();
+    let body: unknown;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(
+        `Models API returned non-JSON (${response.status}): ${text.slice(0, 200)}`,
+      );
+    }
+
+    if (!response.ok) {
+      const detail =
+        body && typeof body === 'object' && 'error' in body
+          ? JSON.stringify((body as { error: unknown }).error)
+          : text.slice(0, 300);
+      throw new Error(`Models API ${response.status}: ${detail}`);
+    }
+
+    const items = this.extractOpenAIModelListItems(body);
+    const entries: ListedModel[] = [];
+    for (const item of items) {
+      const id = typeof item.id === 'string' ? item.id.trim() : '';
+      if (!id) continue;
+      entries.push({
+        id,
+        displayName: this.readModelDisplayName(item),
+      });
+    }
+    return entries;
+  }
+
+  private extractOpenAIModelListItems(body: unknown): Array<Record<string, unknown>> {
+    if (!body || typeof body !== 'object') return [];
+    const data = (body as { data?: unknown }).data;
+    if (!Array.isArray(data)) return [];
+    return data.filter(
+      (item): item is Record<string, unknown> =>
+        item !== null && typeof item === 'object',
+    );
+  }
+
+  private readModelDisplayName(model: unknown): string | undefined {
+    if (!model || typeof model !== 'object') return undefined;
+    const rec = model as { display_name?: unknown; name?: unknown };
+    const name =
+      typeof rec.display_name === 'string'
+        ? rec.display_name
+        : typeof rec.name === 'string'
+          ? rec.name
+          : undefined;
+    if (typeof name !== 'string') return undefined;
+    const trimmed = name.trim();
+    return trimmed || undefined;
+  }
+
+  /**
+   * 部分 OpenAI 兼容网关会为同一模型返回 `id` 与 `id/子路径` 两条；保留较短 id。
+   */
+  private dedupeAndSortListedModels(entries: ListedModel[]): ListedModel[] {
+    const idSet = new Set(entries.map((e) => e.id));
+    const byId = new Map<string, ListedModel>();
+    for (const entry of entries) {
+      if (this.isRedundantGatewayModelId(entry.id, idSet)) {
+        continue;
+      }
+      const prev = byId.get(entry.id);
+      if (!prev) {
+        byId.set(entry.id, entry);
+        continue;
+      }
+      if (!prev.displayName && entry.displayName) {
+        byId.set(entry.id, entry);
+      }
+    }
+    return [...byId.values()].sort((a, b) => {
+      const labelA = (a.displayName || a.id).toLowerCase();
+      const labelB = (b.displayName || b.id).toLowerCase();
+      const byLabel = labelA.localeCompare(labelB);
+      return byLabel !== 0 ? byLabel : a.id.localeCompare(b.id);
+    });
+  }
+
+  private isRedundantGatewayModelId(id: string, allIds: Set<string>): boolean {
+    const slash = id.indexOf('/');
+    if (slash <= 0) return false;
+    const base = id.slice(0, slash);
+    return allIds.has(base);
+  }
+
   private trimString(value: unknown): string | undefined {
     if (typeof value !== 'string') return undefined;
     const trimmed = value.trim();
@@ -310,11 +423,6 @@ export class SpeedTester {
     const trimmed = baseURL?.trim();
     if (!trimmed) return undefined;
     return trimmed.replace(/\/+$/, '').replace(/\/v1$/, '');
-  }
-
-  private normalizeModelsBaseURL(baseURL?: string): string | undefined {
-    const normalized = this.normalizeBaseURL(baseURL);
-    return normalized?.replace(/\/anthropic$/i, '');
   }
 
   public formatError(error: unknown): string {
