@@ -113,6 +113,9 @@ export class SettingsWriter {
       const extraEnv = (profile.extraSettings as any).env;
       if (extraEnv && typeof extraEnv === 'object') {
         for (const [key, value] of Object.entries(extraEnv)) {
+          if ((ENV_KEYS as string[]).includes(key)) {
+            continue;
+          }
           if (value !== undefined && value !== null && value !== '') {
             env[key] = String(value);
           } else {
